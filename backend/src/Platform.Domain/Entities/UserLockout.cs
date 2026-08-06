@@ -16,7 +16,7 @@ public partial class User
     /// Number of consecutive failed login attempts since the last successful login.
     /// Reset to 0 on successful login.
     /// </summary>
-    public int FailedLoginCount { get; set; } = 0;
+    public int FailedLoginCount { get; set; }
 
     /// <summary>
     /// UTC datetime until which this account is locked.
