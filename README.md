@@ -1,4 +1,4 @@
-# Platform — Enterprise Programming Education Platform
+# Codean — Enterprise Programming Education Platform
 
 An end-to-end, production-grade SaaS for programming teachers, students, and the ecosystem
 around them. Combines the best of Google Classroom, Microsoft Teams, Moodle, Coursera,
@@ -9,38 +9,38 @@ cohesive learning experience.
 
 ## ✨ Highlights
 
-- **Monorepo** with Clean Architecture backend (ASP.NET Core) + Next.js 14 frontend
+- **Monorepo** with Clean Architecture backend (ASP.NET Core .NET 10) + Next.js 14 / React 19 frontend
 - **CQRS + MediatR** + **EF Core (PostgreSQL)** + **Redis** + **Elasticsearch**
-- **REST + GraphQL** APIs, JWT + Refresh tokens, 2FA, role-based authorization
+- **REST + OpenAPI** endpoints, JWT + Refresh tokens, 2FA (TOTP), JTI revocation, lockouts, RBAC authorization
+- **Transactional Outbox Pattern** for reliable domain event processing
 - **Monthly Content Subscription** model with Paymob (binary: Free / Subscribed)
 - **Live sessions** via Google Meet & Microsoft Teams with brokered access
 - **Video library**, **assignments**, **exams**, **quizzes**, **rubrics**, **anti-cheat**
-- **Gamification** (XP, levels, badges, streaks, leaderboards, certificates)
+- **Code Execution Sandbox Engine** (`Platform.Judge`) with isolated execution & test case evaluation
+- **Gamification** (XP, levels, badges, streaks, leaderboards, certificates via QuestPDF)
 - **WhatsApp Parent Notifications**, **admin panel**, **teacher analytics**
 - **PWA**, **dark/light mode**, **glassmorphism**, **accessibility (WCAG 2.1 AA)**
-- **Docker**, **Kubernetes (Helm)**, **CI/CD (GitHub Actions)**, **Hangfire**, **SignalR**
+- **Docker**, **Kubernetes (Helm)**, **CI/CD (GitHub Actions)**, **Hangfire**, **Serilog**
 
 ---
 
 ## 🗂 Repository Layout
 
 ```
-Platform/
-├── docs/                    # 24 design + planning documents
+Codean/
+├── docs/                    # 25 design + planning documents
 ├── backend/                 # ASP.NET Core solution (Clean Architecture)
 │   ├── src/
-│   │   ├── Platform.Domain         # Entities, VOs, domain events, enums
-│   │   ├── Platform.Application    # CQRS, DTOs, validators, interfaces
-│   │   ├── Platform.Infrastructure # EF Core, Redis, ES, Paymob, Meet/Teams
-│   │   ├── Platform.Shared         # Cross-cutting, Result pattern, exceptions
-│   │   ├── Platform.Api            # REST + GraphQL endpoints
-│   │   └── Platform.Worker         # Hangfire background jobs
-│   └── tests/               # Unit, integration, functional tests
+│   │   ├── Platform.Domain         # Pure domain: entities, domain events, result pattern
+│   │   ├── Platform.Application    # CQRS, DTOs, validators, behaviors, contracts
+│   │   ├── Platform.Infrastructure # EF Core (PostgreSQL), Outbox, Redis, ES, Paymob, Meet/Teams, Jobs
+│   │   ├── Platform.Api            # Host: REST endpoints, OpenAPI, middlewares, health checks
+│   │   └── Platform.Judge          # Code execution engine & automated grading service
+│   └── tests/               # Unit, integration, architecture tests
 ├── frontend/                # Next.js 14 (App Router) + TypeScript
 │   ├── apps/web             # Main student/teacher/parent app
-│   ├── apps/admin           # Admin panel
 │   └── packages/
-│       ├── ui               # Shadcn UI design system
+│       ├── ui               # Component design system
 │       ├── api              # Generated API client
 │       └── types            # Shared TS types
 ├── infra/
@@ -56,16 +56,16 @@ Platform/
 ## 🚀 Quick start
 
 ```bash
-# Local dev stack
+# 1. Local dev stack (PostgreSQL, Redis, Elasticsearch)
 docker compose -f infra/docker-compose/docker-compose.yml up -d
 
-# Backend
+# 2. Backend
 cd backend
 dotnet restore
 dotnet ef database update --project src/Platform.Infrastructure --startup-project src/Platform.Api
 dotnet run --project src/Platform.Api
 
-# Frontend
+# 3. Frontend
 cd frontend
 pnpm install
 pnpm dev
@@ -87,7 +87,7 @@ deployment topology and [`docs/23-Roadmap.md`](./docs/23-Roadmap.md) for the bui
 | 05 | [System Architecture](./docs/05-System-Architecture.md) | Components, data flow, patterns |
 | 06 | [Database Design](./docs/06-Database-Design.md) | Schema, indexes, partitions |
 | 07 | [ER Diagram](./docs/07-ER-Diagram.md) | Mermaid entity-relationship |
-| 08 | [API Specification](./docs/08-API-Specification.md) | REST + GraphQL contract |
+| 08 | [API Specification](./docs/08-API-Specification.md) | REST contract |
 | 09 | [Backend Implementation Plan](./docs/09-Backend-Implementation-Plan.md) | Build phases |
 | 10 | [Frontend Implementation Plan](./docs/10-Frontend-Implementation-Plan.md) | Build phases |
 | 11 | [Authentication Flow](./docs/11-Authentication-Flow.md) | JWT + refresh + 2FA |
@@ -110,4 +110,4 @@ deployment topology and [`docs/23-Roadmap.md`](./docs/23-Roadmap.md) for the bui
 
 ## 🛡 License
 
-Proprietary. © 2026 Platform. All rights reserved.
+Proprietary. © 2026 Codean. All rights reserved.
