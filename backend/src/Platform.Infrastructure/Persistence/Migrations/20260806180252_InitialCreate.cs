@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
+#pragma warning disable IDE0161 // auto-generated migration — block-scoped namespace is intentional
 
 namespace Platform.Infrastructure.Persistence.Migrations
 {

@@ -49,6 +49,8 @@ public static class HealthCheckExtensions
         return app;
     }
 
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
+
     private static Task WriteJsonReport(HttpContext ctx, HealthReport report)
     {
         ctx.Response.ContentType = "application/json";
@@ -66,7 +68,7 @@ public static class HealthCheckExtensions
                     duration    = e.Value.Duration.TotalMilliseconds,
                     error       = e.Value.Exception?.Message
                 })
-        }, new JsonSerializerOptions { WriteIndented = true });
+        }, JsonOpts);
 
         return ctx.Response.WriteAsync(result);
     }
