@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-api
+  namespace: platform
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/platform-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-worker
+  namespace: platform
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/platform-worker
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-judge
+  namespace: platform
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/platform-judge
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: platform-web
+  namespace: platform
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/platform-web
+---
+# ExternalSecret + SecretStore for pulling secrets from AWS Secrets Manager
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: aws-secrets
+  namespace: platform
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: us-east-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: platform-api
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: platform-secrets
+  namespace: platform
+spec:
+  refreshInterval: 5m
+  secretStoreRef: { name: aws-secrets, kind: SecretStore }
+  target:
+    name: platform-secrets
+    creationPolicy: Owner
+  data:
+    - secretKey: postgres
+      remoteRef: { key: platform/prod/postgres }
+    - secretKey: redis
+      remoteRef: { key: platform/prod/redis }
+    - secretKey: opensearch
+      remoteRef: { key: platform/prod/opensearch }
+    - secretKey: r2-account
+      remoteRef: { key: platform/prod/r2-account }
+    - secretKey: r2-access
+      remoteRef: { key: platform/prod/r2-access }
+    - secretKey: r2-secret
+      remoteRef: { key: platform/prod/r2-secret }
+    - secretKey: paymob-api
+      remoteRef: { key: platform/prod/paymob-api }
+    - secretKey: paymob-hmac
+      remoteRef: { key: platform/prod/paymob-hmac }
+    - secretKey: gmeet-sa
+      remoteRef: { key: platform/prod/gmeet-sa }
+    - secretKey: gmeet-impersonate
+      remoteRef: { key: platform/prod/gmeet-impersonate }
+    - secretKey: ms-tenant
+      remoteRef: { key: platform/prod/ms-tenant }
+    - secretKey: ms-client
+      remoteRef: { key: platform/prod/ms-client }
+    - secretKey: ms-secret
+      remoteRef: { key: platform/prod/ms-secret }
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: platform-jwt
+  namespace: platform
+spec:
+  refreshInterval: 24h
+  secretStoreRef: { name: aws-secrets, kind: SecretStore }
+  target:
+    name: platform-jwt
+    creationPolicy: Owner
+  data:
+    - secretKey: private
+      remoteRef: { key: platform/prod/jwt-private }
+    - secretKey: public
+      remoteRef: { key: platform/prod/jwt-public }

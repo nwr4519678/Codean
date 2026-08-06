@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-judge
+  namespace: platform
+  labels: { app: platform-judge, app.kubernetes.io/component: judge }
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 4 }
+  selector:
+    matchLabels: { app: platform-judge }
+  template:
+    metadata:
+      labels: { app: platform-judge }
+    spec:
+      serviceAccountName: platform-judge
+      # Required for security context with restricted psp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: judge
+          image: REPLACE_ME_ECR/platform/judge:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 8080, name: http }]
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ConnectionStrings__Postgres
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: postgres } }
+          resources:
+            requests: { cpu: "500m", memory: "1Gi" }
+            limits:   { cpu: "2",    memory: "4Gi" }
+          # The judge itself doesn't run user code; it enqueues to isolated
+          # gVisor pods (not deployed here; that's a separate KEDA-managed
+          # per-language runner pool).
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-judge
+  namespace: platform
+spec:
+  selector: { app: platform-judge }
+  ports: [{ name: http, port: 80, targetPort: 8080 }]
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: platform-judge
+  namespace: platform
+spec:
+  scaleTargetRef: { name: platform-judge }
+  minReplicaCount: 2
+  maxReplicaCount: 100
+  cooldownPeriod: 60
+  pollingInterval: 10
+  triggers:
+    - type: postgres
+      metadata:
+        targetQueryValue: "5"
+        activationTargetQueryValue: "1"
+        query: |
+          SELECT COUNT(*)::bigint
+          FROM hangfire.job
+          WHERE statename = 'Enqueued'
+            AND jobtype LIKE '%Judge%'
+        connectionFromEnv: HANGFIRE_PG
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-judge
+  namespace: platform
+spec:
+  minAvailable: 1
+  selector: { matchLabels: { app: platform-judge } }

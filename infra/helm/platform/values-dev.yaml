@@ -1,0 +1,31 @@
+# Dev overrides — single replica, no autoscaling, fast feedback.
+image:
+  registry: 123456789012.dkr.ecr.us-east-1.amazonaws.com/platform
+  tag: "develop"
+
+api:
+  replicas: 1
+  minReplicas: 1
+  maxReplicas: 2
+
+worker:
+  replicas: 1
+
+judge:
+  replicas: 1
+  minReplicas: 1
+  maxReplicas: 5
+
+web:
+  replicas: 1
+
+ingress:
+  hosts:
+    - host: api.dev.platform.local
+      paths: ["/"]
+      service: platform-api
+      port: 80
+    - host: app.dev.platform.local
+      paths: ["/"]
+      service: platform-web
+      port: 80

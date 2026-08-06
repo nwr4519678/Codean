@@ -1,0 +1,41 @@
+# Production overrides.
+apiVersion: v1
+kind: values override
+image:
+  registry: 123456789012.dkr.ecr.us-east-1.amazonaws.com/platform
+  tag: "REPLACE_ME"  # bumped by CI on every release
+
+api:
+  replicas: 6
+  minReplicas: 6
+  maxReplicas: 50
+
+worker:
+  replicas: 3
+
+judge:
+  replicas: 3
+  minReplicas: 3
+  maxReplicas: 100
+
+web:
+  replicas: 6
+
+ingress:
+  hosts:
+    - host: api.platform.app
+      paths: ["/"]
+      service: platform-api
+      port: 80
+    - host: app.platform.app
+      paths: ["/"]
+      service: platform-web
+      port: 80
+  annotations:
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:REPLACE_ME:certificate/REPLACE_ME
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:REPLACE_ME:regional/webacl/REPLACE_ME
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s

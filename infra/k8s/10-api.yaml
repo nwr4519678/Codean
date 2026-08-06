@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-api
+  namespace: platform
+  labels:
+    app: platform-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: platform
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: platform-api }
+  template:
+    metadata:
+      labels: { app: platform-api }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: platform-api
+      terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector: { matchLabels: { app: platform-api } }
+      containers:
+        - name: api
+          image: REPLACE_ME_ECR/platform/api:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 8080, name: http }]
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            - name: ConnectionStrings__Postgres
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: postgres } }
+            - name: Redis__Configuration
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: redis } }
+            - name: OpenSearch__Url
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: opensearch } }
+            - name: CloudflareR2__AccountId
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: r2-account } }
+            - name: CloudflareR2__AccessKey
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: r2-access } }
+            - name: CloudflareR2__SecretKey
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: r2-secret } }
+            - name: CloudflareR2__Bucket
+              value: platform-media
+            - name: Paymob__ApiKey
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: paymob-api } }
+            - name: Paymob__HmacSecret
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: paymob-hmac } }
+            - name: Jwt__PrivateKeyPem
+              valueFrom: { secretKeyRef: { name: platform-jwt, key: private } }
+            - name: Jwt__PublicKeyPem
+              valueFrom: { secretKeyRef: { name: platform-jwt, key: public } }
+            - name: GoogleMeet__ServiceAccountJson
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: gmeet-sa } }
+            - name: GoogleMeet__ImpersonateUser
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: gmeet-impersonate } }
+            - name: MicrosoftTeams__TenantId
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: ms-tenant } }
+            - name: MicrosoftTeams__ClientId
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: ms-client } }
+            - name: MicrosoftTeams__ClientSecret
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: ms-secret } }
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits:   { cpu: "1",    memory: "1Gi" }
+          startupProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            failureThreshold: 30
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-api
+  namespace: platform
+  labels: { app: platform-api }
+spec:
+  selector: { app: platform-api }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: platform-api
+  namespace: platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: platform-api
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 60 } }
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{ type: Percent, value: 25, periodSeconds: 60 }]
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies: [{ type: Percent, value: 100, periodSeconds: 30 }, { type: Pods, value: 4, periodSeconds: 30 }]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-api
+  namespace: platform
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app: platform-api } }

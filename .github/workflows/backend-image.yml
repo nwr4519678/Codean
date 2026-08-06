@@ -1,0 +1,106 @@
+name: backend-image
+
+on:
+  push:
+    branches: [main]
+    paths: [backend/**, .github/workflows/backend-image.yml]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+jobs:
+  publish-images:
+    name: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # for OIDC
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute short SHA
+        id: meta
+        run: echo "sha=${GITHUB_SHA::12}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Platform.Api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.runtime
+          build-args: PROJECT=Platform.Api
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/platform/api:${{ steps.meta.outputs.sha }}
+            ${{ env.ECR_REGISTRY }}/platform/api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Build and push Platform.Worker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.runtime
+          build-args: PROJECT=Platform.Worker
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/platform/worker:${{ steps.meta.outputs.sha }}
+            ${{ env.ECR_REGISTRY }}/platform/worker:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Build and push Platform.Judge
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.runtime
+          build-args: PROJECT=Platform.Judge
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/platform/judge:${{ steps.meta.outputs.sha }}
+            ${{ env.ECR_REGISTRY }}/platform/judge:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+  update-manifests:
+    name: update-helm-values
+    runs-on: ubuntu-latest
+    needs: publish-images
+    steps:
+      - uses: actions/checkout@v4
+        with: { token: ${{ secrets.PLATFORM_BOT_TOKEN }} }
+
+      - name: Update values-prod.yaml
+        run: |
+          SHORT_SHA="${GITHUB_SHA::12}"
+          yq -i ".api.image.tag = \"$SHORT_SHA\"" infra/helm/platform/values-prod.yaml
+          yq -i ".worker.image.tag = \"$SHORT_SHA\"" infra/helm/platform/values-prod.yaml
+          yq -i ".judge.image.tag = \"$SHORT_SHA\"" infra/helm/platform/values-prod.yaml
+
+      - name: Open PR (ArgoCD will sync on merge to main)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "chore(release): bump images to ${{ steps.meta.outputs.sha }}"
+          branch: chore/release-${{ steps.meta.outputs.sha }}
+          commit-message: "chore(release): bump images to ${{ steps.meta.outputs.sha }}"
+          add-paths: infra/helm/platform/values-prod.yaml

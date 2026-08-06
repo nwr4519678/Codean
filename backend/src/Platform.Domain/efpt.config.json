@@ -1,0 +1,282 @@
+﻿{
+   "CodeGenerationMode": 6,
+   "ContextClassName": "AppDbContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": true,
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1604",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Entities",
+   "PluralRules": null,
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "Platform.Domain",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "SingularRules": null,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[AdminProfiles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AnalyticsSnapshots]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Announcements]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ApiKeys]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[AuditLogs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[BackgroundJobs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Certificates]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CodingChallenges]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CodingSubmissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CourseModules]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Courses]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExamAnswers]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExamAttempts]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExamQuestions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ExamResults]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Exams]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Files]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Homework]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HomeworkQuestions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HomeworkSubmissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ImportedLessons]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ImportedPackages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ImportedQuestionBanks]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ImportLogs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Invoices]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Languages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[LessonResources]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Lessons]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[LessonVideos]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[LiveAttendance]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[LiveMeetingProviders]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[LiveSessions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NotificationHistory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Notifications]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[NotificationTemplates]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ParentNotifications]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Payments]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[QuestionAttachments]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[QuestionBanks]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[QuestionChoices]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Questions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[QuestionTags]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[QuestionTypes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RefreshTokens]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Roles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SearchIndex]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Settings]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StudentProfiles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StudentProgress]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StudentSubscriptions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SubscriptionPlans]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SystemLogs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Tags]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TeacherProfiles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TeacherSettings]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Translations]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Users]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UserSessions]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": true,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false,
+   "UseTypedTvpParameters": true
+}

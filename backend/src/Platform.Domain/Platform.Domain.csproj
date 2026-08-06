@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Platform.Domain</RootNamespace>
+    <AssemblyName>Platform.Domain</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Platform.Domain.UnitTests" />
+    <InternalsVisibleTo Include="Platform.Application.UnitTests" />
+    <InternalsVisibleTo Include="Platform.ArchitectureTests" />
+  </ItemGroup>
+
+</Project>

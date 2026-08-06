@@ -1,0 +1,52 @@
+using Platform.Api;
+using Platform.Api.Extensions;
+using Platform.Api.Middleware;
+using Platform.Api.OpenApi;
+using Platform.Application;
+using Platform.Infrastructure;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateBootstrapLogger();
+
+try
+{
+    Log.Information("Starting Platform API host");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Host.AddPlatformSerilog();
+
+    builder.Services.AddPlatformApplication();
+    builder.Services.AddPlatformInfrastructure(builder.Configuration);
+    builder.Services.AddPlatformApi(builder.Configuration);
+
+    var app = builder.Build();
+
+    app.UseSerilogRequestLogging();
+    app.UsePlatformMiddlewares();
+
+    if (app.Environment.IsDevelopment())
+        app.UsePlatformOpenApi();
+
+    app.UseHttpsRedirection();
+    app.UseRateLimiter();
+    app.UseCors("AllowAll");
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.MapPlatformHealthChecks();
+    app.MapPlatformHangfire();
+    app.RegisterPlatformJobs();
+
+    app.Run();
+}
+catch (Exception ex) when (ex is not HostAbortedException)
+{
+    Log.Fatal(ex, "Platform API terminated unexpectedly");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}

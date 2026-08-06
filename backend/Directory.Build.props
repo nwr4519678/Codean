@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CA1416;NU1902;NU1903;NU1904;NU1510;CA1716;CA1725;CA1848;CA1861;CA1305;CA1873;CA1822;CA1000;CA1872;CA1001;CA1859;IDE0011;CS0618;EXTEXP0018;CA1711;CA1707</NoWarn>
+    <Company>Platform</Company>
+    <Authors>Platform Team</Authors>
+    <Copyright>Copyright © 2026 Platform</Copyright>
+    <Product>Platform</Product>
+    <NeutralLanguage>en</NeutralLanguage>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+</Project>

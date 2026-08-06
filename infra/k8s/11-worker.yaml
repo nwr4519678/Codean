@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-worker
+  namespace: platform
+  labels: { app: platform-worker, app.kubernetes.io/component: worker }
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: platform-worker }
+  template:
+    metadata:
+      labels: { app: platform-worker }
+    spec:
+      serviceAccountName: platform-worker
+      containers:
+        - name: worker
+          image: REPLACE_ME_ECR/platform/worker:latest
+          imagePullPolicy: Always
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: ConnectionStrings__Postgres
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: postgres } }
+            - name: Redis__Configuration
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: redis } }
+            - name: Hangfire__Postgres
+              valueFrom: { secretKeyRef: { name: platform-secrets, key: postgres } }
+            - name: Smtp__Host
+              value: mail.platform.svc.cluster.local
+            - name: Smtp__Port
+              value: "25"
+            - name: Smtp__FromAddress
+              value: no-reply@platform.app
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: platform-worker
+  namespace: platform
+spec:
+  minAvailable: 1
+  selector: { matchLabels: { app: platform-worker } }
