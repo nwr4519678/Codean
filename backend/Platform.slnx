@@ -7,6 +7,7 @@
     <Project Path="src/Platform.Judge/Platform.Judge.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Platform.Api.UnitTests/Platform.Api.UnitTests.csproj" />
     <Project Path="tests/Platform.Application.UnitTests/Platform.Application.UnitTests.csproj" />
     <Project Path="tests/Platform.ArchitectureTests/Platform.ArchitectureTests.csproj" />
     <Project Path="tests/Platform.Domain.UnitTests/Platform.Domain.UnitTests.csproj" />

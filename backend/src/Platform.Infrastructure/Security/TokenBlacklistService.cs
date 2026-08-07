@@ -24,7 +24,7 @@ public sealed class TokenBlacklistService : ITokenBlacklistService
     {
         if (string.IsNullOrWhiteSpace(jti)) return;
         var cacheKey = $"blacklist:jti:{jti}";
-        await _cache.SetAsync(cacheKey, true, timeToLive, ct);
+        await _cache.SetAsync(cacheKey, true, timeToLive, ct: ct);
     }
 
     public async Task<bool> IsBlacklistedAsync(string jti, CancellationToken ct = default)

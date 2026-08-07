@@ -32,4 +32,7 @@ public sealed class CurrentUser : ICurrentUser
 
     public string? UserAgent =>
         _httpContextAccessor.HttpContext?.Request?.Headers["User-Agent"].ToString();
+
+    public bool IsInRole(string role) =>
+        _httpContextAccessor.HttpContext?.User?.IsInRole(role) ?? false;
 }

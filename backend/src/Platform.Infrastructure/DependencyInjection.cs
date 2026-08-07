@@ -61,6 +61,7 @@ public static class DependencyInjection
         // Jobs (implementations only — scheduling registration is in Platform.Api)
         services.AddScoped<ProcessOutboxJob>();
         services.AddScoped<TokenCleanupJob>();
+        services.AddScoped<ProcessJudgeResultsJob>();
 
         // ── Authentication & Security ─────────────────────────────────────────
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
