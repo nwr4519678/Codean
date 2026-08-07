@@ -19,10 +19,8 @@ namespace Platform.Api.Controllers;
 /// <summary>
 /// Handles all authentication and account security operations.
 /// </summary>
-[ApiController]
 [Route("api/auth")]
-[Produces("application/json")]
-public sealed class AuthController : ControllerBase
+public sealed class AuthController : ApiController
 {
     private readonly ISender _sender;
 
@@ -218,39 +216,4 @@ public sealed class AuthController : ControllerBase
         return result.IsSuccess ? NoContent() : MapError(result.Error);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Extracts the authenticated user's ID from the JWT "sub" claim.
-    /// Returns false (and sets userId=0) if the claim is absent or invalid.
-    /// </summary>
-    private bool TryGetUserId(out long userId)
-    {
-        userId = 0;
-        var raw = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
-               ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return raw is not null && long.TryParse(raw, out userId);
-    }
-
-    // ── Error Mapping (RFC 7807 ProblemDetails) ───────────────────────────────
-
-    private IActionResult MapError(Error error) => error.Type switch
-    {
-        ErrorType.NotFound            => NotFound(Problem(error, 404)),
-        ErrorType.Conflict            => Conflict(Problem(error, 409)),
-        ErrorType.Unauthorized        => Unauthorized(Problem(error, 401)),
-        ErrorType.Forbidden           => StatusCode(403, Problem(error, 403)),
-        ErrorType.Validation          => UnprocessableEntity(Problem(error, 422)),
-        ErrorType.SubscriptionRequired => StatusCode(402, Problem(error, 402)),
-        ErrorType.Internal            => StatusCode(500, Problem(error, 500)),
-        _                             => BadRequest(Problem(error, 400))
-    };
-
-    private ProblemDetails Problem(Error error, int status) => new()
-    {
-        Status   = status,
-        Title    = error.Code,
-        Detail   = error.Message,
-        Instance = HttpContext.Request.Path
-    };
 }

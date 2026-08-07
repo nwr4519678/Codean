@@ -138,6 +138,24 @@ public static class DependencyInjection
                 o.PermitLimit = 5;
                 o.QueueLimit = 0;
             });
+            opts.AddFixedWindowLimiter("code_submission", o =>
+            {
+                o.Window = TimeSpan.FromMinutes(1);
+                o.PermitLimit = 10;
+                o.QueueLimit = 0;
+            });
+            opts.AddFixedWindowLimiter("payment_checkout", o =>
+            {
+                o.Window = TimeSpan.FromMinutes(15);
+                o.PermitLimit = 5;
+                o.QueueLimit = 0;
+            });
+            opts.AddFixedWindowLimiter("api_read_general", o =>
+            {
+                o.Window = TimeSpan.FromMinutes(1);
+                o.PermitLimit = 100;
+                o.QueueLimit = 10;
+            });
 
             opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });

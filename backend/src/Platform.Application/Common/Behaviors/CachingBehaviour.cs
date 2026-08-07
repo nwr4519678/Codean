@@ -37,7 +37,8 @@ public sealed class CachingBehaviour<TRequest, TResponse> : IPipelineBehavior<TR
 
         if (response is not null)
         {
-            await _cache.SetAsync(request.CacheKey, response, request.Expiration, cancellationToken);
+            var tags = request.Tags.Count > 0 ? request.Tags : null;
+            await _cache.SetAsync(request.CacheKey, response, request.Expiration, tags, cancellationToken);
         }
 
         return response;

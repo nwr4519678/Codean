@@ -39,13 +39,13 @@ public sealed class HybridCacheService : ICacheService
         return result;
     }
 
-    public Task SetAsync<T>(string key, T value, TimeSpan? ttl = null, CancellationToken ct = default)
+    public Task SetAsync<T>(string key, T value, TimeSpan? ttl = null, IReadOnlyList<string>? tags = null, CancellationToken ct = default)
     {
         var options = ttl.HasValue
             ? new HybridCacheEntryOptions { Expiration = ttl }
             : null;
 
-        return _cache.SetAsync(key, value, options, cancellationToken: ct).AsTask();
+        return _cache.SetAsync(key, value, options, tags: tags, cancellationToken: ct).AsTask();
     }
 
     public Task RemoveAsync(string key, CancellationToken ct = default) =>
