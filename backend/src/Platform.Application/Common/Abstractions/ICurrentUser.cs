@@ -6,4 +6,5 @@ public interface ICurrentUser
     string? Email { get; }
     string? IpAddress { get; }
     string? UserAgent { get; }
+    bool IsInRole(string role);
 }

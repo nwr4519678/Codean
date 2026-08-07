@@ -53,7 +53,7 @@ public class ForgotPasswordHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue(); // Anti-enumeration
-        _email.DidNotReceiveWithAnyArgs().SendAsync(default!, default!);
+        await _email.DidNotReceiveWithAnyArgs().SendAsync(default!, default!);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class ForgotPasswordHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue(); // Anti-enumeration
-        _email.DidNotReceiveWithAnyArgs().SendAsync(default!, default!);
+        await _email.DidNotReceiveWithAnyArgs().SendAsync(default!, default!);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class ForgotPasswordHandlerTests
 
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
 
-        _email.Received(1).SendAsync(Arg.Is<EmailMessage>(m =>
+        await _email.Received(1).SendAsync(Arg.Is<EmailMessage>(m =>
             m.To == "active@example.com" &&
             m.Subject.Contains("Password Reset")
         ), Arg.Any<CancellationToken>());

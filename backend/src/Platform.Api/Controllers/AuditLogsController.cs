@@ -12,7 +12,7 @@ using Swashbuckle.AspNetCore.Annotations;
 namespace Platform.Api.Controllers;
 
 /// <summary>
-/// System security & audit trail search for compliance (Admin only).
+/// System security &amp; audit trail search for compliance (Admin only).
 /// </summary>
 [Route("api/audit-logs")]
 [Authorize]
