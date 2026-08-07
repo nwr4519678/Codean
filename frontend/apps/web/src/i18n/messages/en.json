@@ -1,0 +1,44 @@
+{
+  "common": {
+    "appName": "Platform",
+    "tagline": "Master Modern Software Engineering",
+    "search": "Search...",
+    "login": "Sign In",
+    "register": "Get Started",
+    "logout": "Sign Out",
+    "profile": "Profile",
+    "settings": "Settings",
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "pricing": "Pricing",
+    "judge": "Code Judge",
+    "liveSessions": "Live Sessions",
+    "notifications": "Notifications",
+    "billing": "Billing",
+    "admin": "Admin Panel",
+    "switchLang": "العربية"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "judge": "Code Judge",
+    "liveSessions": "Live Sessions",
+    "notifications": "Notifications",
+    "billing": "Billing & Subscriptions",
+    "settings": "Settings",
+    "teacherDashboard": "Teacher Overview",
+    "myCourses": "My Courses",
+    "createCourse": "Create Course",
+    "adminOverview": "Overview",
+    "userManagement": "Users",
+    "allCourses": "All Courses",
+    "auditLogs": "Audit Logs",
+    "subscriptions": "Subscriptions"
+  },
+  "hero": {
+    "title": "Build Real-World Code with Next-Gen Interactive Learning",
+    "subtitle": "Join thousands of developers mastering C#, .NET, Python, and System Design with automated code judging, live sessions, and hands-on projects.",
+    "ctaStart": "Explore Courses",
+    "ctaLogin": "Sign In to Account"
+  }
+}

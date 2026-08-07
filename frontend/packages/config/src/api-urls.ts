@@ -1,0 +1,67 @@
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7130';
+
+export const API_URLS = {
+  AUTH: {
+    REGISTER: '/api/auth/register',
+    LOGIN: '/api/auth/login',
+    REFRESH_TOKEN: '/api/auth/refresh-token',
+    REVOKE_TOKEN: '/api/auth/revoke-token',
+    ME: '/api/auth/me',
+    CHANGE_PASSWORD: '/api/auth/change-password',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    RESET_PASSWORD: '/api/auth/reset-password',
+    VERIFY_EMAIL: '/api/auth/verify-email',
+    TWO_FACTOR_SETUP: '/api/auth/2fa/setup',
+    TWO_FACTOR_VERIFY: '/api/auth/2fa/verify',
+    SESSIONS: '/api/auth/sessions',
+    REVOKE_SESSION: (id: number | string) => `/api/auth/sessions/${id}`,
+  },
+  USERS: {
+    STUDENT_PROFILE: '/api/users/profile/student',
+    TEACHER_PROFILE: '/api/users/profile/teacher',
+    UPDATE_STUDENT_PROFILE: '/api/users/profile/student',
+    UPDATE_TEACHER_PROFILE: '/api/users/profile/teacher',
+    UPLOAD_AVATAR: '/api/users/avatar',
+    USERS_PAGED: '/api/users',
+    ASSIGN_ROLE: (userId: number | string) => `/api/users/${userId}/role`,
+    SET_STATUS: (userId: number | string) => `/api/users/${userId}/status`,
+  },
+  COURSES: {
+    LIST: '/api/courses',
+    DETAIL: (id: number | string) => `/api/courses/${id}`,
+    CREATE: '/api/courses',
+    UPDATE: (id: number | string) => `/api/courses/${id}`,
+    PUBLISH: (id: number | string) => `/api/courses/${id}/publish`,
+    ARCHIVE: (id: number | string) => `/api/courses/${id}/archive`,
+    MODULES: (courseId: number | string) => `/api/courses/${courseId}/modules`,
+    LESSONS: (moduleId: number | string) => `/api/modules/${moduleId}/lessons`,
+    PROGRESS: '/api/progress/track',
+    COURSE_PROGRESS: (courseId: number | string) => `/api/progress/courses/${courseId}`,
+  },
+  JUDGE: {
+    CHALLENGES: '/api/coding-challenges',
+    CHALLENGE_DETAIL: (id: number | string) => `/api/coding-challenges/${id}`,
+    SUBMIT: '/api/coding-challenges/submit',
+    SUBMISSION_STATUS: (submissionId: number | string) => `/api/coding-challenges/submissions/${submissionId}`,
+  },
+  COMMERCE: {
+    PLANS: '/api/subscription-plans',
+    SUBSCRIPTIONS: '/api/subscriptions',
+    MY_SUBSCRIPTION: '/api/subscriptions/me',
+    CHECKOUT: '/api/payments/checkout',
+    PAYMOB_WEBHOOK: '/api/payments/paymob-webhook',
+  },
+  COMMUNICATION: {
+    ANNOUNCEMENTS: '/api/announcements',
+    NOTIFICATIONS: '/api/notifications',
+    MARK_NOTIFICATION_READ: (id: number | string) => `/api/notifications/${id}/read`,
+  },
+  LIVE_SESSIONS: {
+    LIST: '/api/live-sessions',
+    DETAIL: (id: number | string) => `/api/live-sessions/${id}`,
+  },
+  ANALYTICS: {
+    OVERVIEW: '/api/analytics/overview',
+    AUDIT_LOGS: '/api/audit-logs',
+  },
+} as const;

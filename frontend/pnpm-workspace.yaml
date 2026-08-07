@@ -1,0 +1,15 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  '@sentry/cli': true
+  core-js: true
+  sharp: true
+
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - core-js
+  - sharp
+  - '@parcel/watcher'
+  - '@swc/core'
