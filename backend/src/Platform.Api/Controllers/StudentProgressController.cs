@@ -19,7 +19,7 @@ public sealed class StudentProgressController : ApiController
     private readonly ISender _sender;
     public StudentProgressController(ISender sender) => _sender = sender;
 
-    /// <summary>Records or updates student progress on a lesson (completion % & watch time).</summary>
+    /// <summary>Records or updates student progress on a lesson (completion % &amp; watch time).</summary>
     [HttpPost("track")]
     [SwaggerOperation(Summary = "Track Lesson Progress", Tags = ["Student Progress"])]
     [ProducesResponseType(typeof(StudentProgressResponse), StatusCodes.Status200OK)]

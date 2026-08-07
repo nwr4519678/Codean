@@ -1,3 +1,5 @@
+using Platform.Application.Common.Abstractions;
+
 namespace Platform.Application.Common.Caching;
 
 public interface ICacheableRequest

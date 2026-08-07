@@ -41,7 +41,7 @@ public sealed record CourseDetailResponse(
 public sealed record CreateCourseCommand(
     string Title,
     string Description,
-    string Thumbnail,
+    string? Thumbnail,
     string Category,
     decimal Price
 ) : IRequest<Result<CourseResponse>>;
@@ -50,7 +50,7 @@ public sealed record UpdateCourseCommand(
     long CourseId,
     string Title,
     string Description,
-    string Thumbnail,
+    string? Thumbnail,
     string Category,
     decimal Price
 ) : IRequest<Result<CourseResponse>>;

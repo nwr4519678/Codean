@@ -117,6 +117,8 @@ public sealed class SubmitCodeChallengeHandler
         ));
     }
 
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
     private static List<TestCaseDto> ParseTestCases(string? testCasesJson)
     {
         if (string.IsNullOrWhiteSpace(testCasesJson))
@@ -124,8 +126,7 @@ public sealed class SubmitCodeChallengeHandler
 
         try
         {
-            return JsonSerializer.Deserialize<List<TestCaseDto>>(testCasesJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+            return JsonSerializer.Deserialize<List<TestCaseDto>>(testCasesJson, JsonOptions) ?? [];
         }
         catch
         {

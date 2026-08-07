@@ -7,13 +7,13 @@ namespace Platform.Domain.UnitTests.Primitives;
 
 public class AggregateRootTests
 {
-    private record TestDomainEvent(string Data) : IDomainEvent
+    private sealed record TestDomainEvent(string Data) : IDomainEvent
     {
         public Guid Id { get; } = Guid.NewGuid();
         public DateTime OccurredOn { get; } = DateTime.UtcNow;
     }
 
-    private class TestAggregate : AggregateRoot
+    private sealed class TestAggregate : AggregateRoot
     {
         public void DoSomething(string data)
         {

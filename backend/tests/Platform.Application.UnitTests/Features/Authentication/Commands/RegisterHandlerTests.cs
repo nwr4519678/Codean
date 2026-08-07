@@ -92,7 +92,7 @@ public class RegisterHandlerTests
 
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
 
-        _email.Received(1).SendAsync(Arg.Is<EmailMessage>(m =>
+        await _email.Received(1).SendAsync(Arg.Is<EmailMessage>(m =>
             m.To == "user@domain.com" &&
             m.Subject.Contains("Verify Your Email")
         ), Arg.Any<CancellationToken>());
