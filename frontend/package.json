@@ -2,33 +2,26 @@
   "name": "platform-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Platform - Programming Education Platform frontend (Next.js 15 + React 19)",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "description": "Platform - Programming Education Platform frontend (Next.js 16 + React 19)",
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
-    "build": "npm run build --workspaces --if-present",
-    "start": "npm run start --workspace=apps/web",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
-    "test": "npm run test --workspaces --if-present"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "pnpm --filter web start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\""
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.18.0",
-    "@typescript-eslint/parser": "^8.18.0",
-    "eslint": "^9.17.0",
-    "eslint-config-next": "^15.1.0",
     "prettier": "^3.4.0",
     "prettier-plugin-tailwindcss": "^0.6.9",
+    "turbo": "^2.4.0",
     "typescript": "^5.7.0"
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "packageManager": "pnpm@11.20.0"
 }

@@ -1,125 +1,116 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL, API_URLS } from '@platform/config';
+import { RefreshTokenResponse } from '@platform/contracts';
 
-/**
- * Configured Axios client for the Platform API.
- *
- * - Reads its base URL from `NEXT_PUBLIC_API_URL`.
- * - Attaches the JWT access token (if any) from local storage on every request.
- * - Automatically refreshes expired access tokens via the /auth/refresh endpoint.
- * - Surfaces RFC 7807 problem+json errors as typed <ApiError>s.
- */
-export class ApiError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly code: string,
-    message: string,
-    public readonly details?: Record<string, unknown>,
-  ) {
-    super(message);
-    this.name = "ApiError";
-  }
-}
+const ACCESS_TOKEN_KEY = 'platform_access_token';
+const REFRESH_TOKEN_KEY = 'platform_refresh_token';
 
-interface Tokens {
-  accessToken: string;
-  refreshToken: string;
-  accessExpiresAt: string;
-}
+export const getStoredAccessToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+};
 
-const ACCESS_KEY = "platform.access";
-const REFRESH_KEY = "platform.refresh";
-const ACCESS_EXP_KEY = "platform.accessExp";
+export const getStoredRefreshToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+};
 
-export class ApiClient {
-  private axios: AxiosInstance;
-  private refreshing: Promise<void> | null = null;
+export const setAuthTokens = (accessToken: string, refreshToken: string) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+};
 
-  constructor(baseURL: string) {
-    this.axios = axios.create({ baseURL, withCredentials: false });
-    this.axios.interceptors.request.use((cfg) => {
-      const access = localStorage.getItem(ACCESS_KEY);
-      if (access) cfg.headers.Authorization = `Bearer ${access}`;
-      return cfg;
-    });
+export const clearAuthTokens = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+};
 
-    this.axios.interceptors.response.use(
-      (r) => r,
-      async (err) => {
-        const original = err.config as AxiosRequestConfig & { _retry?: boolean };
-        if (err.response?.status === 401 && !original._retry) {
-          original._retry = true;
-          await this.tryRefresh();
-          const access = localStorage.getItem(ACCESS_KEY);
-          if (access) original.headers = { ...(original.headers ?? {}), Authorization: `Bearer ${access}` };
-          return this.axios.request(original);
-        }
-        throw this.toApiError(err);
-      }
-    );
-  }
+export const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000,
+});
 
-  private toApiError(err: unknown): ApiError {
-    const ax = err as { response?: { status: number; data: { code?: string; title?: string; detail?: string; errors?: Record<string, unknown> } } };
-    if (ax.response) {
-      const { status, data } = ax.response;
-      return new ApiError(status, data.code ?? "unknown", data.title ?? data.detail ?? "Request failed.", data.errors);
+// Request interceptor: attach Bearer token
+apiClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = getStoredAccessToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return new ApiError(0, "network", "Network error.");
-  }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-  private async tryRefresh(): Promise<void> {
-    if (this.refreshing) return this.refreshing;
-    const refresh = localStorage.getItem(REFRESH_KEY);
-    if (!refresh) return;
-    this.refreshing = (async () => {
-      try {
-        const { data } = await this.axios.post<{ accessToken: string; refreshToken: string; accessTokenExpiresAt: string }>(
-          "/api/v1/auth/refresh",
-          { refreshToken: refresh }
-        );
-        localStorage.setItem(ACCESS_KEY, data.accessToken);
-        localStorage.setItem(REFRESH_KEY, data.refreshToken);
-        localStorage.setItem(ACCESS_EXP_KEY, data.accessTokenExpiresAt);
-      } catch {
-        localStorage.removeItem(ACCESS_KEY);
-        localStorage.removeItem(REFRESH_KEY);
+// Response interceptor: silent token refresh on 401
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
       }
-    })();
-    await this.refreshing;
-    this.refreshing = null;
-  }
 
-  setTokens(t: Tokens) {
-    localStorage.setItem(ACCESS_KEY, t.accessToken);
-    localStorage.setItem(REFRESH_KEY, t.refreshToken);
-    localStorage.setItem(ACCESS_EXP_KEY, t.accessExpiresAt);
-  }
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-  clearTokens() {
-    localStorage.removeItem(ACCESS_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    localStorage.removeItem(ACCESS_EXP_KEY);
-  }
+      const refreshToken = getStoredRefreshToken();
+      if (!refreshToken) {
+        clearAuthTokens();
+        isRefreshing = false;
+        return Promise.reject(error);
+      }
 
-  get<T>(url: string, config?: AxiosRequestConfig) {
-    return this.axios.get<T>(url, config).then((r) => r.data);
-  }
-  post<T>(url: string, body?: unknown, config?: AxiosRequestConfig) {
-    return this.axios.post<T>(url, body, config).then((r) => r.data);
-  }
-  patch<T>(url: string, body?: unknown, config?: AxiosRequestConfig) {
-    return this.axios.patch<T>(url, body, config).then((r) => r.data);
-  }
-  delete<T>(url: string, config?: AxiosRequestConfig) {
-    return this.axios.delete<T>(url, config).then((r) => r.data);
-  }
-}
+      try {
+        const response = await axios.post<RefreshTokenResponse>(
+          `${API_BASE_URL}${API_URLS.AUTH.REFRESH_TOKEN}`,
+          { refreshToken }
+        );
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        setAuthTokens(accessToken, newRefreshToken);
 
-let _instance: ApiClient | null = null;
-export function getApi(): ApiClient {
-  if (!_instance) {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
-    _instance = new ApiClient(base);
+        apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+        processQueue(null, accessToken);
+        isRefreshing = false;
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshErr) {
+        processQueue(refreshErr, null);
+        clearAuthTokens();
+        isRefreshing = false;
+        return Promise.reject(refreshErr);
+      }
+    }
+
+    return Promise.reject(error);
   }
-  return _instance;
-}
+);

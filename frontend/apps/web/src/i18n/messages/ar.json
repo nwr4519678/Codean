@@ -1,0 +1,44 @@
+{
+  "common": {
+    "appName": "بلاتفورم",
+    "tagline": "احتراف هندسة البرمجيات الحديثة",
+    "search": "بحث...",
+    "login": "تسجيل الدخول",
+    "register": "ابدأ الآن",
+    "logout": "تسجيل الخروج",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "dashboard": "لوحة التحكم",
+    "courses": "الدورات التدريبية",
+    "pricing": "الخطط والأسعار",
+    "judge": "المصحح البرمجي",
+    "liveSessions": "الجلسات المباشرة",
+    "notifications": "الإشعارات",
+    "billing": "الاشتراكات والمدفوعات",
+    "admin": "لوحة الإدارة",
+    "switchLang": "English"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "courses": "الدورات",
+    "judge": "المصحح البرمجي",
+    "liveSessions": "الجلسات المباشرة",
+    "notifications": "الإشعارات",
+    "billing": "الاشتراكات والمدفوعات",
+    "settings": "الإعدادات",
+    "teacherDashboard": "نظرة عامة للمعلم",
+    "myCourses": "دوراتي",
+    "createCourse": "إنشاء دورة جديد",
+    "adminOverview": "نظرة عامة",
+    "userManagement": "المستخدمين",
+    "allCourses": "جميع الدورات",
+    "auditLogs": "سجلات التدقيق",
+    "subscriptions": "الاشتراكات"
+  },
+  "hero": {
+    "title": "تعلم البرمجة التفاعلية وبناء مشاريع برمجية حقيقية",
+    "subtitle": "انضم إلى آلاف المطورين لتعلم C# و .NET و Python وهندسة الأنظمة مع تصحيح برمجيات فوري وجلسات مباشرة.",
+    "ctaStart": "استكشف الدورات",
+    "ctaLogin": "تسجيل الدخول"
+  }
+}
