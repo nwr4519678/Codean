@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsApi } from './api';
 import { notificationKeys } from './keys';
 
-export const useNotifications = (params?: { isRead?: boolean; page?: number }) =>
+export const useNotifications = (params?: { unreadOnly?: boolean; pageNumber?: number; pageSize?: number }) =>
   useQuery({
     queryKey: notificationKeys.list(params),
     queryFn: () => notificationsApi.getAll(params),

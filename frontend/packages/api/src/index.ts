@@ -12,6 +12,10 @@ export * from './learning/api';
 export * from './learning/hooks';
 export * from './learning/keys';
 
+export * from './modules/api';
+export * from './modules/hooks';
+export * from './modules/keys';
+
 export * from './judge/api';
 export * from './judge/hooks';
 export * from './judge/keys';
@@ -31,3 +35,15 @@ export * from './notifications/keys';
 export * from './analytics/api';
 export * from './analytics/hooks';
 export * from './analytics/keys';
+
+export * from './exams/api';
+export * from './exams/hooks';
+export * from './exams/keys';
+
+export * from './homework/api';
+export * from './homework/hooks';
+export * from './homework/keys';
+
+export * from './announcements/api';
+export * from './announcements/hooks';
+export * from './announcements/keys';

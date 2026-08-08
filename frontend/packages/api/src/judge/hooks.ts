@@ -2,13 +2,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { judgeApi } from './api';
 import { judgeQueryKeys } from './keys';
 
-export const useCodingChallenges = () => {
-  return useQuery({
-    queryKey: judgeQueryKeys.challenges(),
-    queryFn: judgeApi.getChallenges,
-  });
-};
-
 export const useCodingChallengeDetail = (id: number | string) => {
   return useQuery({
     queryKey: judgeQueryKeys.challengeDetail(id),

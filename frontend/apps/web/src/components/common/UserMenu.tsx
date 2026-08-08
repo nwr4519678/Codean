@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useCurrentUser, useLogout } from '@platform/api';
+import { getStoredRefreshToken, useCurrentUser, useLogout } from '@platform/api';
 import { User, Settings, CreditCard, LogOut, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,7 +13,10 @@ export function UserMenu() {
 
   const handleLogout = async () => {
     try {
-      await logoutMutation.mutateAsync('refresh_token_sample');
+      const refreshToken = getStoredRefreshToken();
+      if (refreshToken) {
+        await logoutMutation.mutateAsync(refreshToken);
+      }
       toast.success('Logged out successfully');
       window.location.href = '/auth/login';
     } catch {
@@ -52,6 +55,14 @@ export function UserMenu() {
             <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
           </div>
 
+          <Link
+            href={user.role === 'Teacher' || user.role === 'Admin' ? '/teacher/dashboard' : '/dashboard'}
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <User className="h-3.5 w-3.5" />
+            Dashboard
+          </Link>
           <Link
             href="/profile"
             onClick={() => setIsOpen(false)}

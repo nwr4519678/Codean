@@ -46,25 +46,37 @@ public sealed class CreateCourseHandler : IRequestHandler<CreateCourseCommand, R
             return Result<CourseResponse>.Failure(Error.Unauthorized("auth.unauthenticated", "You must be logged in."));
 
         long teacherId = _currentUser.UserId.Value;
-
         var now = _clock.UtcNow.UtcDateTime;
+
+        // Auto-create TeacherProfile if missing (handles accounts created before auto-create was added)
+        var profile = await _teachers.FirstOrDefaultAsync(t => t.UserId == teacherId, ct);
+        if (profile is null)
+        {
+            await _teachers.AddAsync(new TeacherProfile
+            {
+                UserId     = teacherId,
+                Biography  = string.Empty,
+                IsVerified = true
+            }, ct);
+            await _uow.SaveChangesAsync(ct);
+        }
+
         var course = new Course
         {
-            TeacherId = teacherId,
-            Title = request.Title.Trim(),
+            TeacherId   = teacherId,
+            Title       = request.Title.Trim(),
             Description = request.Description?.Trim(),
-            Thumbnail = request.Thumbnail?.Trim(),
-            Category = request.Category.Trim(),
-            Price = request.Price,
+            Thumbnail   = request.Thumbnail?.Trim(),
+            Category    = request.Category.Trim(),
+            Price       = request.Price,
             IsPublished = false,
-            CreatedAt = now,
-            UpdatedAt = now
+            CreatedAt   = now,
+            UpdatedAt   = now
         };
 
         await _courses.AddAsync(course, ct);
         await _uow.SaveChangesAsync(ct);
 
-        // Invalidate all course list pages
         await _cache.RemoveByTagAsync(CacheTags.CourseList, ct);
 
         return Result<CourseResponse>.Success(course.ToResponse());
@@ -286,7 +298,7 @@ public sealed class GetCoursesPagedHandler : IRequestHandler<GetCoursesPagedQuer
                      .Select(c => c.ToResponse())
                      .ToList();
 
-        var paged = new PagedList<CourseResponse>(items, request.PageNumber, request.PageSize, total);
+        var paged = new PagedList<CourseResponse>(items, total, request.PageNumber, request.PageSize);
         return Result<PagedList<CourseResponse>>.Success(paged);
     }
 }

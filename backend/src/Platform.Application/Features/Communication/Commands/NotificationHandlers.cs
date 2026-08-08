@@ -172,7 +172,7 @@ public sealed class GetMyNotificationsPagedHandler
                      .ToList();
 
         return Result<PagedList<NotificationResponse>>.Success(
-            new PagedList<NotificationResponse>(items, request.PageNumber, request.PageSize, total));
+            new PagedList<NotificationResponse>(items, total, request.PageNumber, request.PageSize));
     }
 }
 

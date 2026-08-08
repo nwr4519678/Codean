@@ -5,3 +5,5 @@ export * from './judge';
 export * from './commerce';
 export * from './users';
 export * from './analytics';
+export * from './assessments';
+export * from './platform';

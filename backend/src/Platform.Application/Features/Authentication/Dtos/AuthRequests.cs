@@ -18,7 +18,8 @@ public sealed record RegisterCommand(
     string FullName,
     string Email,
     string Password,
-    string? Phone = null)
+    string? Phone = null,
+    string? Role = "Student")
     : IRequest<Result<RegisterResponse>>;
 
 // ── Login ─────────────────────────────────────────────────────────────────────

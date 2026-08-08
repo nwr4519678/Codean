@@ -9,6 +9,14 @@ export const useStudentProfile = () => {
   });
 };
 
+export const useUpdateStudentProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: usersApi.updateStudentProfile,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: usersQueryKeys.studentProfile() }),
+  });
+};
+
 export const useTeacherProfile = () => {
   return useQuery({
     queryKey: usersQueryKeys.teacherProfile(),
@@ -26,8 +34,8 @@ export const useAdminUsers = (params?: { pageNumber?: number; pageSize?: number;
 export const useAssignRole = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, role }: { userId: number; role: string }) =>
-      usersApi.assignUserRole(userId, role),
+    mutationFn: ({ userId, roleId }: { userId: number; roleId: number }) =>
+      usersApi.assignUserRole(userId, roleId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: usersQueryKeys.all });
     },

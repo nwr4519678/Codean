@@ -18,17 +18,31 @@ public abstract class ApiController : ControllerBase
 {
     // ── Error Mapping (RFC 7807 ProblemDetails) ───────────────────────────────
 
-    protected IActionResult MapError(Error error) => error.Type switch
+    protected IActionResult MapError(Error? error)
     {
-        ErrorType.NotFound             => NotFound(Problem(error, 404)),
-        ErrorType.Conflict             => Conflict(Problem(error, 409)),
-        ErrorType.Unauthorized         => Unauthorized(Problem(error, 401)),
-        ErrorType.Forbidden            => StatusCode(403, Problem(error, 403)),
-        ErrorType.Validation           => UnprocessableEntity(Problem(error, 422)),
-        ErrorType.SubscriptionRequired => StatusCode(402, Problem(error, 402)),
-        ErrorType.Internal             => StatusCode(500, Problem(error, 500)),
-        _                              => BadRequest(Problem(error, 400))
-    };
+        if (error is null)
+        {
+            return StatusCode(500, new ProblemDetails
+            {
+                Status = 500,
+                Title = "Server.Error",
+                Detail = "An unexpected error occurred.",
+                Instance = HttpContext.Request.Path
+            });
+        }
+
+        return error.Type switch
+        {
+            ErrorType.NotFound             => NotFound(Problem(error, 404)),
+            ErrorType.Conflict             => Conflict(Problem(error, 409)),
+            ErrorType.Unauthorized         => Unauthorized(Problem(error, 401)),
+            ErrorType.Forbidden            => StatusCode(403, Problem(error, 403)),
+            ErrorType.Validation           => UnprocessableEntity(Problem(error, 422)),
+            ErrorType.SubscriptionRequired => StatusCode(402, Problem(error, 402)),
+            ErrorType.Internal             => StatusCode(500, Problem(error, 500)),
+            _                              => BadRequest(Problem(error, 400))
+        };
+    }
 
     protected ProblemDetails Problem(Error error, int status) => new()
     {

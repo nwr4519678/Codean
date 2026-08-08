@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Platform.Application.Common.Pagination;
@@ -12,14 +13,28 @@ public sealed class PagedList<T>
     public bool HasPreviousPage => PageNumber > 1;
     public bool HasNextPage => PageNumber < TotalPages;
 
-    public PagedList(IReadOnlyList<T> items, long count, int pageNumber, int pageSize)
+    // Primary constructor — used by application code
+    public PagedList(IReadOnlyList<T> items, long totalCount, int pageNumber, int pageSize)
     {
-        PageNumber = pageNumber < 1 ? 1 : pageNumber;
-        PageSize = pageSize < 1 ? 10 : pageSize;
-        TotalCount = count;
-        TotalPages = (int)Math.Ceiling(count / (double)PageSize);
-        Items = items;
+        PageNumber  = pageNumber < 1 ? 1 : pageNumber;
+        PageSize    = pageSize   < 1 ? 10 : pageSize;
+        TotalCount  = totalCount;
+        TotalPages  = (int)Math.Ceiling(totalCount / (double)PageSize);
+        Items       = items;
     }
+
+    // JSON / HybridCache deserialization constructor
+    // Parameter names must exactly match property names (case-insensitive)
+    [JsonConstructor]
+    public PagedList(
+        IReadOnlyList<T> items,
+        long totalCount,
+        int pageNumber,
+        int pageSize,
+        int totalPages,
+        bool hasPreviousPage,
+        bool hasNextPage)
+        : this(items, totalCount, pageNumber, pageSize) { }
 
     public static async Task<PagedList<T>> CreateAsync(
         IQueryable<T> source,
@@ -27,8 +42,8 @@ public sealed class PagedList<T>
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var page = pageNumber < 1 ? 1 : pageNumber;
-        var size = pageSize < 1 ? 10 : (pageSize > 100 ? 100 : pageSize);
+        var page  = pageNumber < 1 ? 1 : pageNumber;
+        var size  = pageSize   < 1 ? 10 : (pageSize > 100 ? 100 : pageSize);
         var count = await source.LongCountAsync(cancellationToken);
         var items = await source.Skip((page - 1) * size).Take(size).ToListAsync(cancellationToken);
         return new PagedList<T>(items, count, page, size);
@@ -45,3 +60,4 @@ public record PagedResponse<T>(
     long TotalCount,
     bool HasPreviousPage,
     bool HasNextPage);
+

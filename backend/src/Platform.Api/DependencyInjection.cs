@@ -82,7 +82,7 @@ public static class DependencyInjection
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKeys = signingKeys,
                     ValidateLifetime = true,
-                    ClockSkew = TimeSpan.FromSeconds(30)
+                    ClockSkew = TimeSpan.FromMinutes(5)
                 };
 
                 // JTI Blacklist check via JwtBearerEvents (no middleware needed)
@@ -122,14 +122,14 @@ public static class DependencyInjection
         {
             opts.AddFixedWindowLimiter("auth_login", o =>
             {
-                o.Window = TimeSpan.FromMinutes(15);
-                o.PermitLimit = 10;
+                o.Window = TimeSpan.FromMinutes(1);
+                o.PermitLimit = 30;
                 o.QueueLimit = 0;
             });
             opts.AddFixedWindowLimiter("auth_register", o =>
             {
-                o.Window = TimeSpan.FromHours(1);
-                o.PermitLimit = 5;
+                o.Window = TimeSpan.FromMinutes(1);
+                o.PermitLimit = 50;
                 o.QueueLimit = 0;
             });
             opts.AddFixedWindowLimiter("auth_sensitive", o =>

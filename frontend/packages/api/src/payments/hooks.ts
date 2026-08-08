@@ -18,7 +18,12 @@ export const useMySubscription = () => {
 
 export const useInitCheckout = () => {
   return useMutation({
-    mutationFn: ({ planId, isYearly }: { planId: number; isYearly: boolean }) =>
-      paymentsApi.initCheckout(planId, isYearly),
+    mutationFn: ({ planId }: { planId: number }) => paymentsApi.initCheckout(planId),
   });
 };
+
+export const useMyPayments = (params?: { pageNumber?: number; pageSize?: number }) =>
+  useQuery({
+    queryKey: paymentsQueryKeys.payments(params),
+    queryFn: () => paymentsApi.getMyPayments(params),
+  });

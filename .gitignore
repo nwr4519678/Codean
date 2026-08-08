@@ -1,33 +1,77 @@
-## Visual Studio / .NET
-.vs/
-bin/
-obj/
-*.user
-*.userosscache
-*.sln.docstates
-*.suo
-*.userosscache
-*.userprefs
-*.DS_Store
+@"
+# ==============================
+# Environment / Secrets
+# ==============================
+.env
+.env.*
+!.env.example
+!.env.sample
 
-## Node / Frontend
+# ==============================
+# Node / Next.js
+# ==============================
 node_modules/
 .next/
+out/
 dist/
 build/
-out/
 .turbo/
+.cache/
+.nx/
+*.tsbuildinfo
 
-## Environment & Secrets
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-*.pem
+# ==============================
+# .NET / Visual Studio
+# ==============================
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
-## Logs & Temp
+# ==============================
+# Test / Coverage
+# ==============================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# ==============================
+# Logs
+# ==============================
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+logs/
+
+# ==============================
+# OS
+# ==============================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==============================
+# Archives / Generated files
+# ==============================
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# ==============================
+# AI / Local Tool Files
+# ==============================
+.zcode/
+
+# ==============================
+# Temporary files
+# ==============================
+*.tmp
+*.temp
+*.bak
+*.swp
+"@ | Add-Content .gitignore

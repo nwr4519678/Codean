@@ -20,9 +20,14 @@ export const authApi = {
     password: string;
     firstName: string;
     lastName: string;
-    role: string;
+    role?: string;
   }): Promise<RegisterResponse> => {
-    const res = await apiClient.post<RegisterResponse>(API_URLS.AUTH.REGISTER, payload);
+    const res = await apiClient.post<RegisterResponse>(API_URLS.AUTH.REGISTER, {
+      fullName: `${payload.firstName} ${payload.lastName}`.trim(),
+      email: payload.email,
+      password: payload.password,
+      role: payload.role,
+    });
     return res.data;
   },
 

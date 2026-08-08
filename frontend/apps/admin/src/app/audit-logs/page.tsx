@@ -41,11 +41,7 @@ export default function AdminAuditLogsPage() {
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </td>
                 </tr>
-              ) : (auditData?.items || [
-                { id: 1, createdAt: '2026-08-07 19:40:00', userEmail: 'admin@platform.dev', action: 'UserRoleAssigned', entityType: 'User', entityId: '3', ipAddress: '127.0.0.1' },
-                { id: 2, createdAt: '2026-08-07 19:35:12', userEmail: 'alex@student.dev', action: 'CodeSubmissionPassed', entityType: 'CodingChallenge', entityId: '1', ipAddress: '192.168.1.5' },
-                { id: 3, createdAt: '2026-08-07 19:20:45', userEmail: 'sarah@teacher.dev', action: 'CoursePublished', entityType: 'Course', entityId: '10', ipAddress: '10.0.0.2' },
-              ]).map((log) => (
+              ) : auditData?.items?.length ? auditData.items.map((log) => (
                 <tr key={log.id} className="hover:bg-muted/30">
                   <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{log.createdAt}</td>
                   <td className="px-6 py-4 font-semibold text-foreground">{log.userEmail || 'System'}</td>
@@ -53,7 +49,9 @@ export default function AdminAuditLogsPage() {
                   <td className="px-6 py-4 text-xs text-muted-foreground">{log.entityType} ({log.entityId})</td>
                   <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{log.ipAddress || 'Internal'}</td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">No audit events were found.</td></tr>
+              )}
             </tbody>
           </table>
         </div>

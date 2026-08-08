@@ -179,6 +179,6 @@ public sealed class GetExamsPagedHandler : IRequestHandler<GetExamsPagedQuery, R
                      .Select(e => e.ToResponse())
                      .ToList();
 
-        return Result<PagedList<ExamResponse>>.Success(new PagedList<ExamResponse>(items, request.PageNumber, request.PageSize, total));
+        return Result<PagedList<ExamResponse>>.Success(new PagedList<ExamResponse>(items, total, request.PageNumber, request.PageSize));
     }
 }

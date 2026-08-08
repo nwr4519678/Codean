@@ -17,6 +17,8 @@ namespace Platform.Application.Features.Authentication.Commands.Register;
 public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<RegisterResponse>>
 {
     private readonly IRepository<User> _users;
+    private readonly IRepository<Role> _roles;
+    private readonly IRepository<TeacherProfile> _teacherProfiles;
     private readonly IRepository<AuditLog> _auditLogs;
     private readonly IUnitOfWork _uow;
     private readonly IPasswordHasher _hasher;
@@ -26,6 +28,8 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
 
     public RegisterHandler(
         IRepository<User> users,
+        IRepository<Role> roles,
+        IRepository<TeacherProfile> teacherProfiles,
         IRepository<AuditLog> auditLogs,
         IUnitOfWork uow,
         IPasswordHasher hasher,
@@ -33,13 +37,15 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
         ICurrentUser current,
         IClock clock)
     {
-        _users     = users;
-        _auditLogs = auditLogs;
-        _uow       = uow;
-        _hasher    = hasher;
-        _email     = email;
-        _current   = current;
-        _clock     = clock;
+        _users           = users;
+        _roles           = roles;
+        _teacherProfiles = teacherProfiles;
+        _auditLogs       = auditLogs;
+        _uow             = uow;
+        _hasher          = hasher;
+        _email           = email;
+        _current         = current;
+        _clock           = clock;
     }
 
     public async Task<Result<RegisterResponse>> Handle(RegisterCommand cmd, CancellationToken ct)
@@ -48,6 +54,19 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
 
         if (await _users.AnyAsync(u => u.Email == normalizedEmail, ct))
             return Error.Conflict("auth.email_in_use", "An account with this email already exists.");
+
+        var targetRoleName = cmd.Role?.Trim().ToLowerInvariant() switch
+        {
+            "teacher" => "Teacher",
+            "admin"   => "Admin",
+            _         => "Student"
+        };
+
+        var role = await _roles.FirstOrDefaultAsync(r => r.Name == targetRoleName, ct)
+                   ?? await _roles.FirstOrDefaultAsync(r => r.Name == "Student", ct);
+
+        if (role is null)
+            return Error.NotFound("role.not_found", "Requested role was not found.");
 
         var now  = _clock.UtcNow.UtcDateTime;
         var hash = _hasher.Hash(cmd.Password);
@@ -58,7 +77,7 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
             Email         = normalizedEmail,
             Phone         = cmd.Phone?.Trim(),
             PasswordHash  = hash,
-            RoleId        = 1,     // Default: Student
+            RoleId        = role.Id,
             IsActive      = true,
             EmailConfirmed = false,
             CreatedAt     = now,
@@ -67,6 +86,16 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
 
         await _users.AddAsync(user, ct);
 
+        if (role.Name == "Teacher")
+        {
+            await _teacherProfiles.AddAsync(new TeacherProfile
+            {
+                User = user,
+                Biography = "Instructor on Codean Platform",
+                IsVerified = true
+            }, ct);
+        }
+
         await _auditLogs.AddAsync(new AuditLog
         {
             User       = user,
@@ -74,7 +103,7 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
             EntityType = "User",
             IpAddress  = _current.IpAddress,
             CreatedAt  = now,
-            NewValues  = $"{{\"Email\":\"{normalizedEmail}\",\"FullName\":\"{user.FullName}\"}}"
+            NewValues  = $"{{\"Email\":\"{normalizedEmail}\",\"FullName\":\"{user.FullName}\",\"Role\":\"{role.Name}\"}}"
         }, ct);
 
         await _uow.SaveChangesAsync(ct);

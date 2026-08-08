@@ -130,3 +130,21 @@ public sealed class GetCodingChallengeByIdHandler
         return Result<CodingChallengeResponse>.Success(challenge.ToResponse());
     }
 }
+
+public sealed class GetCodingChallengesHandler
+    : IRequestHandler<GetCodingChallengesQuery, Result<IReadOnlyList<CodingChallengeResponse>>>
+{
+    private readonly IRepository<CodingChallenge> _challenges;
+    public GetCodingChallengesHandler(IRepository<CodingChallenge> challenges) => _challenges = challenges;
+
+    public async Task<Result<IReadOnlyList<CodingChallengeResponse>>> Handle(
+        GetCodingChallengesQuery request, CancellationToken ct)
+    {
+        var challenges = await _challenges.ListAsync(ct: ct);
+        var responses = challenges
+            .OrderByDescending(challenge => challenge.CreatedAt)
+            .Select(challenge => challenge.ToResponse())
+            .ToList();
+        return Result<IReadOnlyList<CodingChallengeResponse>>.Success(responses);
+    }
+}

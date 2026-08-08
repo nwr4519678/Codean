@@ -1,4 +1,5 @@
 import { apiClient } from '../client';
+import { authApi } from '../auth/api';
 import { API_URLS } from '@platform/config';
 import {
   StudentProfileResponse,
@@ -7,18 +8,28 @@ import {
   PagedList,
 } from '@platform/contracts';
 
+export interface StudentProfileUpdate {
+  grade?: string;
+  school?: string;
+  parentPhone?: string;
+  parentPhone2?: string;
+  notes?: string;
+}
+
 export const usersApi = {
   getStudentProfile: async (): Promise<StudentProfileResponse> => {
-    const res = await apiClient.get<StudentProfileResponse>(API_URLS.USERS.STUDENT_PROFILE);
+    const user = await authApi.getCurrentUser();
+    const res = await apiClient.get<StudentProfileResponse>(API_URLS.USERS.STUDENT_PROFILE(user.id));
     return res.data;
   },
 
   getTeacherProfile: async (): Promise<TeacherProfileResponse> => {
-    const res = await apiClient.get<TeacherProfileResponse>(API_URLS.USERS.TEACHER_PROFILE);
+    const user = await authApi.getCurrentUser();
+    const res = await apiClient.get<TeacherProfileResponse>(API_URLS.USERS.TEACHER_PROFILE(user.id));
     return res.data;
   },
 
-  updateStudentProfile: async (payload: Partial<StudentProfileResponse>): Promise<StudentProfileResponse> => {
+  updateStudentProfile: async (payload: StudentProfileUpdate): Promise<StudentProfileResponse> => {
     const res = await apiClient.put<StudentProfileResponse>(API_URLS.USERS.UPDATE_STUDENT_PROFILE, payload);
     return res.data;
   },
@@ -28,8 +39,8 @@ export const usersApi = {
     return res.data;
   },
 
-  assignUserRole: async (userId: number, role: string): Promise<void> => {
-    await apiClient.put(API_URLS.USERS.ASSIGN_ROLE(userId), { role });
+  assignUserRole: async (userId: number, roleId: number): Promise<void> => {
+    await apiClient.put(API_URLS.USERS.ASSIGN_ROLE(userId), { roleId });
   },
 
   setUserStatus: async (userId: number, isActive: boolean): Promise<void> => {

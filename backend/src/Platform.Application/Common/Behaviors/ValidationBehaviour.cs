@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentValidation;
 using MediatR;
 using Platform.Domain.Results;
@@ -27,8 +31,7 @@ public sealed class ValidationBehaviour<TRequest, TResponse> : IPipelineBehavior
             .GroupBy(f => f.PropertyName)
             .ToDictionary(g => g.Key, g => (object?)g.Select(x => x.ErrorMessage).ToArray());
 
-        return (TResponse)(object)Result.Failure(
-            Error.Validation("validation.failed", "One or more validation errors occurred.", data));
+        var error = Error.Validation("validation.failed", "One or more validation errors occurred.", data);
+        return ResultHelper.CreateFailure<TResponse>(error);
     }
 }
-
