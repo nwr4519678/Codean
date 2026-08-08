@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7130';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5294';
 
 export const API_URLS = {
   AUTH: {
@@ -17,11 +17,12 @@ export const API_URLS = {
     REVOKE_SESSION: (id: number | string) => `/api/auth/sessions/${id}`,
   },
   USERS: {
-    STUDENT_PROFILE: '/api/users/profile/student',
-    TEACHER_PROFILE: '/api/users/profile/teacher',
-    UPDATE_STUDENT_PROFILE: '/api/users/profile/student',
-    UPDATE_TEACHER_PROFILE: '/api/users/profile/teacher',
-    UPLOAD_AVATAR: '/api/users/avatar',
+    STUDENT_PROFILE: (userId: number | string) => `/api/students/${userId}`,
+    TEACHER_PROFILE: (userId: number | string) => `/api/teachers/${userId}`,
+    UPDATE_STUDENT_PROFILE: '/api/students/me',
+    UPDATE_TEACHER_PROFILE: '/api/teachers/me',
+    STUDENT_AVATAR_UPLOAD: '/api/students/me/avatar/upload-url',
+    TEACHER_AVATAR_UPLOAD: '/api/teachers/me/avatar/upload-url',
     USERS_PAGED: '/api/users',
     ASSIGN_ROLE: (userId: number | string) => `/api/users/${userId}/role`,
     SET_STATUS: (userId: number | string) => `/api/users/${userId}/status`,
@@ -39,21 +40,20 @@ export const API_URLS = {
     COURSE_PROGRESS: (courseId: number | string) => `/api/progress/courses/${courseId}`,
   },
   JUDGE: {
-    CHALLENGES: '/api/coding-challenges',
-    CHALLENGE_DETAIL: (id: number | string) => `/api/coding-challenges/${id}`,
-    SUBMIT: '/api/coding-challenges/submit',
-    SUBMISSION_STATUS: (submissionId: number | string) => `/api/coding-challenges/submissions/${submissionId}`,
+    CHALLENGE_DETAIL: (id: number | string) => `/api/challenges/${id}`,
+    SUBMIT: (id: number | string) => `/api/challenges/${id}/submit`,
+    SUBMISSION_STATUS: (submissionId: number | string) => `/api/submissions/${submissionId}/status`,
   },
   COMMERCE: {
-    PLANS: '/api/subscription-plans',
+    PLANS: '/api/plans',
     SUBSCRIPTIONS: '/api/subscriptions',
     MY_SUBSCRIPTION: '/api/subscriptions/me',
-    CHECKOUT: '/api/payments/checkout',
-    PAYMOB_WEBHOOK: '/api/payments/paymob-webhook',
+    CHECKOUT: '/api/subscriptions/checkout',
+    PAYMOB_WEBHOOK: '/api/webhooks/paymob',
   },
   COMMUNICATION: {
     ANNOUNCEMENTS: '/api/announcements',
-    NOTIFICATIONS: '/api/notifications',
+    NOTIFICATIONS: '/api/notifications/me',
     MARK_NOTIFICATION_READ: (id: number | string) => `/api/notifications/${id}/read`,
   },
   LIVE_SESSIONS: {

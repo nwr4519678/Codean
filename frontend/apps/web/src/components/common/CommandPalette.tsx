@@ -4,21 +4,24 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, BookOpen, Code2, Video, CreditCard, Settings, User } from 'lucide-react';
 
-export function CommandPalette() {
-  const [isOpen, setIsOpen] = useState(false);
+interface CommandPaletteProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function CommandPalette({ isOpen = false, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const router = useRouter();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsOpen((prev) => !prev);
+      if (e.key === 'Escape' && onClose) {
+        onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [onClose]);
 
   if (!isOpen) return null;
 
@@ -34,13 +37,13 @@ export function CommandPalette() {
   const filtered = navItems.filter((i) => i.label.toLowerCase().includes(query.toLowerCase()));
 
   const handleSelect = (href: string) => {
-    setIsOpen(false);
+    if (onClose) onClose();
     router.push(href);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-background/80 backdrop-blur-md animate-in fade-in">
-      <div className="w-full max-w-xl rounded-3xl border border-border/80 bg-card p-4 shadow-2xl space-y-3">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-background/80 backdrop-blur-md animate-in fade-in" onClick={onClose}>
+      <div className="w-full max-w-xl rounded-3xl border border-border/80 bg-card p-4 shadow-2xl space-y-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-border/60 pb-3 px-2">
           <Search className="h-5 w-5 text-muted-foreground" />
           <input
@@ -51,7 +54,7 @@ export function CommandPalette() {
             placeholder="Type a command or search platform (Ctrl + K)..."
             className="w-full bg-transparent text-sm text-foreground focus:outline-none"
           />
-          <kbd className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
+          <kbd className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground cursor-pointer" onClick={onClose}>ESC</kbd>
         </div>
 
         <div className="max-h-64 overflow-y-auto space-y-1">

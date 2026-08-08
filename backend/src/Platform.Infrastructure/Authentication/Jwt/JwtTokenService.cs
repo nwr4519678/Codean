@@ -24,8 +24,12 @@ public sealed class JwtTokenService : ITokenIssuer
 
     public IssuedTokens Issue(AccessTokenDescriptor descriptor, string? userAgent = null, string? ip = null)
     {
-        var now = DateTimeOffset.UtcNow;
-        var accessExp = now.AddMinutes(_opt.AccessTokenLifetimeMinutes);
+        var now        = DateTimeOffset.UtcNow;
+        // Honour the descriptor lifetime (allows per-request overrides like RememberMe)
+        var lifetime   = descriptor.Lifetime > TimeSpan.Zero
+            ? descriptor.Lifetime
+            : TimeSpan.FromMinutes(_opt.AccessTokenLifetimeMinutes);
+        var accessExp  = now.Add(lifetime);
         var refreshExp = now.AddDays(_opt.RefreshTokenLifetimeDays);
         var jti = Guid.NewGuid().ToString();
 

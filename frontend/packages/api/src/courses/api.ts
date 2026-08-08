@@ -8,7 +8,7 @@ import {
 } from '@platform/contracts';
 
 export const coursesApi = {
-  getCourses: async (params?: { pageNumber?: number; pageSize?: number; search?: string; category?: string }): Promise<PagedList<CourseResponse>> => {
+  getCourses: async (params?: { pageNumber?: number; pageSize?: number; search?: string; category?: string; teacherId?: number; isPublished?: boolean }): Promise<PagedList<CourseResponse>> => {
     const res = await apiClient.get<PagedList<CourseResponse>>(API_URLS.COURSES.LIST, { params });
     return res.data;
   },

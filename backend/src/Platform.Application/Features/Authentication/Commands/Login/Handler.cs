@@ -151,11 +151,33 @@ public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<LoginRes
 
     private static List<string> BuildPermissions(string role)
     {
-        var p = new List<string> { Permissions.CoursesRead, Permissions.LessonsRead };
+        var p = new List<string> { Permissions.CoursesRead, Permissions.LessonsRead, Permissions.ExamsRead };
+
         if (role is "Teacher" or "Admin")
-            p.AddRange([Permissions.CoursesWrite, Permissions.ExamsGrade]);
+        {
+            p.AddRange([
+                Permissions.CoursesWrite,
+                Permissions.CoursesManage,
+                Permissions.LessonsWrite,
+                Permissions.ExamsGrade,
+                Permissions.ExamsManage,
+                Permissions.HomeworksManage,
+                Permissions.ChallengesManage,
+                Permissions.AnnouncementsManage
+            ]);
+        }
+
         if (role is "Admin")
-            p.AddRange([Permissions.UsersManage, Permissions.SystemSettingsManage]);
+        {
+            p.AddRange([
+                Permissions.UsersRead,
+                Permissions.UsersManage,
+                Permissions.PlansManage,
+                Permissions.AnalyticsRead,
+                Permissions.SystemSettingsManage
+            ]);
+        }
+
         return p;
     }
 

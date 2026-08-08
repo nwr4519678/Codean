@@ -187,6 +187,6 @@ public sealed class GetAnnouncementsPagedHandler
                      .ToList();
 
         return Result<PagedList<AnnouncementResponse>>.Success(
-            new PagedList<AnnouncementResponse>(items, request.PageNumber, request.PageSize, total));
+            new PagedList<AnnouncementResponse>(items, total, request.PageNumber, request.PageSize));
     }
 }

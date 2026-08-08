@@ -38,13 +38,9 @@ export default function TeacherCoursesPage() {
         <div className="flex min-h-[300px] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : (
+      ) : coursesData?.items.length ? (
         <div className="space-y-4">
-          {(coursesData?.items || [
-            { id: 1, title: 'Clean Architecture in .NET 10', category: 'C# & .NET', enrolledStudents: 842, price: 49, isPublished: true },
-            { id: 2, title: 'System Design Fundamentals', category: 'System Design', enrolledStudents: 340, price: 59, isPublished: true },
-            { id: 3, title: 'Python Async Programming', category: 'Python', enrolledStudents: 0, price: 39, isPublished: false },
-          ]).map((course: CourseItem) => (
+          {coursesData.items.map((course: CourseItem) => (
             <div
               key={course.id}
               className="flex items-center justify-between rounded-2xl border border-border/70 bg-card p-6 shadow-sm hover:border-primary/40 hover:shadow-md transition-all"
@@ -54,10 +50,12 @@ export default function TeacherCoursesPage() {
                   <BookOpen className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-sm font-bold">{course.title}</h3>
+                  <Link href={`/teacher/courses/${course.id}`} className="text-base font-bold hover:text-primary transition-colors">
+                    {course.title}
+                  </Link>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="rounded-full border border-border/60 px-2 py-0.5">{course.category}</span>
-                    <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {course.enrolledStudents} students</span>
+                    {course.enrolledStudents !== undefined && <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {course.enrolledStudents} students</span>}
                     <span className="font-semibold text-foreground">${course.price}</span>
                   </div>
                 </div>
@@ -68,15 +66,21 @@ export default function TeacherCoursesPage() {
                   {course.isPublished ? 'Published' : 'Draft'}
                 </span>
                 <Link
+                  href={`/teacher/courses/${course.id}`}
+                  className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3.5 py-1.5 text-xs font-semibold hover:bg-background transition-all"
+                >
+                  View Details
+                </Link>
+                <Link
                   href={`/teacher/courses/${course.id}/modules`}
-                  className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3 py-1.5 text-xs font-semibold hover:bg-background transition-all"
+                  className="flex items-center gap-1.5 rounded-xl border border-border bg-muted px-3.5 py-1.5 text-xs font-semibold hover:bg-background transition-all"
                 >
                   <Edit className="h-3.5 w-3.5" />
-                  Manage Modules
+                  Curriculum
                 </Link>
                 <Link
                   href={`/teacher/courses/${course.id}/edit`}
-                  className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-all"
+                  className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-all"
                 >
                   Edit
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -85,7 +89,7 @@ export default function TeacherCoursesPage() {
             </div>
           ))}
         </div>
-      )}
+      ) : <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">You have not created any courses yet.</div>}
     </div>
   );
 }

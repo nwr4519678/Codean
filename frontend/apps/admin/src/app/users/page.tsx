@@ -10,9 +10,11 @@ export default function AdminUsersPage() {
   const { data: pagedUsers, isLoading } = useAdminUsers({ search: search || undefined });
   const assignRoleMutation = useAssignRole();
 
-  const handleRoleChange = async (userId: number, role: string) => {
+  const roleIds = { Student: 1, Teacher: 2, Admin: 3 } as const;
+
+  const handleRoleChange = async (userId: number, role: keyof typeof roleIds) => {
     try {
-      await assignRoleMutation.mutateAsync({ userId, role });
+      await assignRoleMutation.mutateAsync({ userId, roleId: roleIds[role] });
       toast.success('User role updated successfully');
     } catch {
       toast.error('Failed to update role');
@@ -64,11 +66,7 @@ export default function AdminUsersPage() {
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </td>
                 </tr>
-              ) : (pagedUsers?.items || [
-                { id: 1, email: 'admin@platform.dev', firstName: 'System', lastName: 'Admin', role: 'Admin', isActive: true },
-                { id: 2, email: 'teacher@platform.dev', firstName: 'Sarah', lastName: 'Connor', role: 'Teacher', isActive: true },
-                { id: 3, email: 'student@platform.dev', firstName: 'Alex', lastName: 'Mercer', role: 'Student', isActive: true },
-              ]).map((user) => (
+              ) : pagedUsers?.items?.length ? pagedUsers.items.map((user) => (
                 <tr key={user.id} className="hover:bg-muted/30">
                   <td className="px-6 py-4 font-medium">
                     <div>
@@ -79,7 +77,7 @@ export default function AdminUsersPage() {
                   <td className="px-6 py-4">
                     <select
                       value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value as keyof typeof roleIds)}
                       className="rounded-lg border border-input bg-background px-2.5 py-1 text-xs font-semibold"
                     >
                       <option value="Student">Student</option>
@@ -99,7 +97,9 @@ export default function AdminUsersPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">No users matched this search.</td></tr>
+              )}
             </tbody>
           </table>
         </div>

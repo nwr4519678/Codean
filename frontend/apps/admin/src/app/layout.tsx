@@ -9,8 +9,8 @@ export default function AdminRootLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <html lang="en" className="dark">
-      <body className="bg-background text-foreground antialiased">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body suppressHydrationWarning className="bg-background text-foreground antialiased">
         <QueryProvider>
           <div className="flex min-h-screen bg-background">
             <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />

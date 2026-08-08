@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Platform.Api;
 using Platform.Api.Extensions;
 using Platform.Api.Middleware;
@@ -39,7 +40,21 @@ try
     app.MapPlatformHangfire();
     app.RegisterPlatformJobs();
 
+    // ── Migrate & Seed ────────────────────────────────────────────────────────
+    using (var scope = app.Services.CreateScope())
+    {
+        var db     = scope.ServiceProvider.GetRequiredService<Platform.Infrastructure.Persistence.Context.AppDbContext>();
+        var seeder = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        // Apply any pending EF migrations automatically
+        await db.Database.MigrateAsync();
+
+        // Seed core reference data (Roles etc.)
+        await Platform.Infrastructure.Persistence.DatabaseSeeder.SeedAsync(db, seeder);
+    }
+
     app.Run();
+
 }
 catch (Exception ex) when (ex is not HostAbortedException)
 {

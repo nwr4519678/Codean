@@ -1,24 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { CreditCard, ShieldCheck, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import React from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useInitCheckout, useSubscriptionPlans } from '@platform/api';
 
 export default function CheckoutPage() {
-  const router = useRouter();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'wallet'>('card');
+  const searchParams = useSearchParams();
+  const planId = Number(searchParams.get('planId'));
+  const { data: plans, isLoading: isLoadingPlans } = useSubscriptionPlans();
+  const checkout = useInitCheckout();
+  const plan = plans?.find((candidate) => candidate.id === planId);
 
   const handlePayment = async () => {
-    setIsProcessing(true);
-    toast.info('Connecting to Paymob payment gateway...');
-
-    // Simulate Paymob integration token generation & redirect
-    setTimeout(() => {
-      setIsProcessing(false);
-      router.push('/checkout/success');
-    }, 2000);
+    if (!plan) return;
+    try {
+      const session = await checkout.mutateAsync({ planId: plan.id });
+      const checkoutUrl = session.checkoutUrl;
+      if (!checkoutUrl || !/^https?:\/\//i.test(checkoutUrl)) throw new Error('Invalid checkout URL');
+      window.location.assign(checkoutUrl);
+    } catch {
+      toast.error('Unable to start secure checkout. Please try again.');
+    }
   };
 
   return (
@@ -28,31 +32,31 @@ export default function CheckoutPage() {
         <p className="text-sm text-muted-foreground">Secure payment powered by Paymob</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+      {isLoadingPlans ? <div className="flex min-h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : !plan ? <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">Select a valid plan before starting checkout.</p> : <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Order Summary */}
         <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-6">
           <h2 className="text-lg font-bold">Order Summary</h2>
 
           <div className="flex items-center justify-between border-b border-border/60 pb-4">
             <div>
-              <h3 className="font-semibold">Pro Student Subscription</h3>
-              <p className="text-xs text-muted-foreground">Billed monthly • Unlimited courses & judge</p>
+              <h3 className="font-semibold">{plan.name}</h3>
+              <p className="text-xs text-muted-foreground">{plan.description}</p>
             </div>
-            <span className="text-xl font-bold">$29/mo</span>
+            <span className="text-xl font-bold">{new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EGP' }).format(plan.price)}</span>
           </div>
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>$29.00</span>
+              <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EGP' }).format(plan.price)}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax</span>
-              <span>$0.00</span>
+              <span>Calculated by payment provider</span>
             </div>
             <div className="flex justify-between font-bold text-foreground pt-2 border-t border-border/40">
               <span>Total Due</span>
-              <span>$29.00</span>
+              <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EGP' }).format(plan.price)}</span>
             </div>
           </div>
 
@@ -62,58 +66,27 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Payment Method Selector & Submit */}
+        {/* Paymob hosts payment-method selection on its secure checkout page. */}
         <div className="rounded-3xl border border-border/80 bg-card p-6 space-y-6">
-          <h2 className="text-lg font-bold">Select Payment Method</h2>
-
-          <div className="space-y-3">
-            <label
-              onClick={() => setPaymentMethod('card')}
-              className={`flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-all ${
-                paymentMethod === 'card'
-                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                  : 'border-border bg-background'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-primary" />
-                <span className="text-sm font-semibold">Credit / Debit Card (Visa/MasterCard)</span>
-              </div>
-              <input type="radio" checked={paymentMethod === 'card'} readOnly />
-            </label>
-
-            <label
-              onClick={() => setPaymentMethod('wallet')}
-              className={`flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-all ${
-                paymentMethod === 'wallet'
-                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                  : 'border-border bg-background'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Lock className="h-5 w-5 text-accent" />
-                <span className="text-sm font-semibold">Mobile Wallet (Vodafone / Orange / Etisalat Cash)</span>
-              </div>
-              <input type="radio" checked={paymentMethod === 'wallet'} readOnly />
-            </label>
-          </div>
+          <h2 className="text-lg font-bold">Secure payment</h2>
+          <p className="text-sm text-muted-foreground">You will choose your payment method securely on Paymob. We never collect card or wallet details on this site.</p>
 
           <button
             onClick={handlePayment}
-            disabled={isProcessing}
+            disabled={checkout.isPending}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
           >
-            {isProcessing ? (
+            {checkout.isPending ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               <>
-                Pay $29.00 Now
+                Continue to Paymob
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

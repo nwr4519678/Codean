@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Code2, LayoutDashboard, Users, BookOpen, FileText, CreditCard, ShieldAlert, Settings, X } from 'lucide-react';
+import { LayoutDashboard, Users, BookOpen, FileText, CreditCard, ShieldAlert, Settings, X } from 'lucide-react';
 
 const ADMIN_NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
@@ -25,15 +25,16 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={onClose} />
+        <div suppressHydrationWarning className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden" onClick={onClose} />
       )}
 
       <aside
+        suppressHydrationWarning
         className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border/60 bg-card shadow-2xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex h-16 items-center justify-between border-b border-border/40 px-5">
+        <div suppressHydrationWarning className="flex h-16 items-center justify-between border-b border-border/40 px-5">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive text-white shadow-md">
               <ShieldAlert className="h-5 w-5" />
@@ -47,7 +48,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav suppressHydrationWarning className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {ADMIN_NAV.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href;
             return (
@@ -63,7 +64,7 @@ export function AdminSidebar({ isOpen = true, onClose }: AdminSidebarProps) {
           })}
         </nav>
 
-        <div className="border-t border-border/40 p-4">
+        <div suppressHydrationWarning className="border-t border-border/40 p-4">
           <p className="text-[10px] text-muted-foreground text-center">Platform Admin v1.0</p>
         </div>
       </aside>

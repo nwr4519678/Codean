@@ -80,6 +80,6 @@ public sealed class GetMyPaymentsPagedHandler
                      .ToList();
 
         return Result<PagedList<PaymentResponse>>.Success(
-            new PagedList<PaymentResponse>(items, request.PageNumber, request.PageSize, total));
+            new PagedList<PaymentResponse>(items, total, request.PageNumber, request.PageSize));
     }
 }

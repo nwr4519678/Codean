@@ -7,18 +7,14 @@ import {
 } from '@platform/contracts';
 
 export const judgeApi = {
-  getChallenges: async (): Promise<CodingChallengeResponse[]> => {
-    const res = await apiClient.get<CodingChallengeResponse[]>(API_URLS.JUDGE.CHALLENGES);
-    return res.data;
-  },
-
   getChallengeById: async (id: number | string): Promise<CodingChallengeResponse> => {
     const res = await apiClient.get<CodingChallengeResponse>(API_URLS.JUDGE.CHALLENGE_DETAIL(id));
     return res.data;
   },
 
   submitCode: async (payload: { challengeId: number; sourceCode: string; language: string }): Promise<SubmitCodeResponse> => {
-    const res = await apiClient.post<SubmitCodeResponse>(API_URLS.JUDGE.SUBMIT, payload);
+    const { challengeId, sourceCode, language } = payload;
+    const res = await apiClient.post<SubmitCodeResponse>(API_URLS.JUDGE.SUBMIT(challengeId), { sourceCode, language });
     return res.data;
   },
 

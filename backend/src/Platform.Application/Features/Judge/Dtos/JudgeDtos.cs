@@ -43,6 +43,9 @@ public sealed record UpdateCodingChallengeCommand(
 public sealed record GetCodingChallengeByIdQuery(long ChallengeId)
     : IRequest<Result<CodingChallengeResponse>>;
 
+public sealed record GetCodingChallengesQuery()
+    : IRequest<Result<IReadOnlyList<CodingChallengeResponse>>>;
+
 // ── Code Submission DTOs ──────────────────────────────────────────────────
 
 /// <summary>

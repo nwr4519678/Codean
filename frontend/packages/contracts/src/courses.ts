@@ -33,6 +33,8 @@ export interface CourseResponse {
   updatedAt: string;
   moduleCount: number;
   lessonCount: number;
+  enrollmentCount?: number;
+  rating?: number;
 }
 
 export interface CourseDetailResponse {

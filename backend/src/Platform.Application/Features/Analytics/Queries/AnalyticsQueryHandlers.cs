@@ -46,7 +46,7 @@ public sealed class GetAuditLogsPagedHandler
                      .ToList();
 
         return Result<PagedList<AuditLogResponse>>.Success(
-            new PagedList<AuditLogResponse>(items, request.PageNumber, request.PageSize, total));
+            new PagedList<AuditLogResponse>(items, total, request.PageNumber, request.PageSize));
     }
 }
 

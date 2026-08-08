@@ -1,3 +1,5 @@
+using System;
+using System.Reflection;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Platform.Application.Common;
@@ -37,7 +39,8 @@ public sealed class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TR
 }
 
 /// <summary>
-/// Catches unhandled exceptions and returns a Result.Failure instead of propagating.
+/// Catches unhandled exceptions and wraps them as a typed Result failure
+/// instead of letting them propagate as unhandled HTTP 500s.
 /// </summary>
 public sealed class UnhandledExceptionBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
@@ -54,13 +57,38 @@ public sealed class UnhandledExceptionBehaviour<TRequest, TResponse> : IPipeline
         catch (DomainException ex)
         {
             _logger.LogWarning(ex, "Domain exception in {Request}: {Code}", typeof(TRequest).Name, ex.Error.Code);
-            return (TResponse)(object)Result.Failure(ex.Error);
+            return CreateFailureResult(ex.Error);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception in {Request}", typeof(TRequest).Name);
-            return (TResponse)(object)Result.Failure(Error.Internal("server.unhandled", "An unexpected error occurred."));
+            return CreateFailureResult(Error.Internal("server.unhandled", "An unexpected error occurred."));
         }
     }
-}
 
+    /// <summary>
+    /// Wraps an Error into the correct return type for this pipeline stage.
+    /// Handles both Result&lt;T&gt; (generic) and non-generic Result.
+    /// </summary>
+    private static TResponse CreateFailureResult(Error error)
+    {
+        var type = typeof(TResponse);
+
+        // Result<T> — use Result<T>.Failure(error) via reflection
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Result<>))
+        {
+            var innerType = type.GetGenericArguments()[0];
+            var method = typeof(Result<>)
+                .MakeGenericType(innerType)
+                .GetMethod("Failure", BindingFlags.Public | BindingFlags.Static, [typeof(Error)])!;
+            return (TResponse)method.Invoke(null, [error])!;
+        }
+
+        // Non-generic Result
+        if (type == typeof(Result))
+            return (TResponse)(object)Result.Failure(error);
+
+        // Cannot wrap — rethrow as an unrecoverable failure
+        throw new InvalidOperationException($"Cannot create failure result for response type '{type.FullName}'.");
+    }
+}
