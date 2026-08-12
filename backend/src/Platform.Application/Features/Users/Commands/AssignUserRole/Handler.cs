@@ -11,6 +11,8 @@ namespace Platform.Application.Features.Users.Commands.AssignUserRole;
 public sealed class AssignUserRoleHandler : IRequestHandler<AssignUserRoleCommand, Result>
 {
     private readonly IRepository<User> _users;
+    private readonly IRepository<Role> _roles;
+    private readonly IRepository<TeacherProfile> _teacherProfiles;
     private readonly IRepository<AuditLog> _auditLogs;
     private readonly IUnitOfWork _uow;
     private readonly ICurrentUser _current;
@@ -18,16 +20,20 @@ public sealed class AssignUserRoleHandler : IRequestHandler<AssignUserRoleComman
 
     public AssignUserRoleHandler(
         IRepository<User> users,
+        IRepository<Role> roles,
+        IRepository<TeacherProfile> teacherProfiles,
         IRepository<AuditLog> auditLogs,
         IUnitOfWork uow,
         ICurrentUser current,
         IClock clock)
     {
-        _users     = users;
-        _auditLogs = auditLogs;
-        _uow       = uow;
-        _current   = current;
-        _clock     = clock;
+        _users           = users;
+        _roles           = roles;
+        _teacherProfiles = teacherProfiles;
+        _auditLogs       = auditLogs;
+        _uow             = uow;
+        _current         = current;
+        _clock           = clock;
     }
 
     public async Task<Result> Handle(AssignUserRoleCommand cmd, CancellationToken ct)
@@ -39,11 +45,31 @@ public sealed class AssignUserRoleHandler : IRequestHandler<AssignUserRoleComman
         if (user.RoleId == cmd.RoleId)
             return Result.Success();
 
+        var role = await _roles.FirstOrDefaultAsync(r => r.Id == cmd.RoleId, ct);
+        if (role is null)
+            return Error.NotFound("users.role_not_found", "Role not found.");
+
         var now = _clock.UtcNow.UtcDateTime;
         var oldRole = user.RoleId;
-        user.RoleId = cmd.RoleId;
+
+        user.RoleId = role.Id;
         user.UpdatedAt = now;
         _users.Update(user);
+
+        // Auto-provision TeacherProfile if assigned Teacher role and profile is missing
+        if (string.Equals(role.Name, "Teacher", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var profile = await _teacherProfiles.FirstOrDefaultAsync(t => t.UserId == user.Id, ct);
+            if (profile is null)
+            {
+                await _teacherProfiles.AddAsync(new TeacherProfile
+                {
+                    UserId     = user.Id,
+                    Biography  = "Instructor on Codean Platform",
+                    IsVerified = true
+                }, ct);
+            }
+        }
 
         await _auditLogs.AddAsync(new AuditLog
         {

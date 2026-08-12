@@ -22,12 +22,13 @@ public sealed class GetStudentProfileHandler : IRequestHandler<GetStudentProfile
 
     public async Task<Result<StudentProfileResponse>> Handle(GetStudentProfileQuery query, CancellationToken ct)
     {
-        var profile = await _studentProfiles.GetByIdAsync(query.UserId, ct);
-        if (profile is null)
-            return Error.NotFound("users.student_profile_not_found", "Student profile not found.");
-
         var user = await _users.GetByIdAsync(query.UserId, ct);
-        profile.User = user!;
+        if (user is null)
+            return Error.NotFound("users.user_not_found", "User not found.");
+
+        var profile = await _studentProfiles.GetByIdAsync(query.UserId, ct)
+                      ?? new StudentProfile { UserId = query.UserId };
+        profile.User = user;
 
         return profile.ToStudentProfileResponse();
     }

@@ -12,11 +12,13 @@ namespace Platform.Application.Features.Authentication.Queries.GetCurrentUser;
 public sealed class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery, Result<CurrentUserResponse>>
 {
     private readonly IRepository<User> _users;
+    private readonly IRepository<Role> _roles;
     private readonly ICurrentUser _current;
 
-    public GetCurrentUserHandler(IRepository<User> users, ICurrentUser current)
+    public GetCurrentUserHandler(IRepository<User> users, IRepository<Role> roles, ICurrentUser current)
     {
         _users   = users;
+        _roles   = roles;
         _current = current;
     }
 
@@ -26,6 +28,7 @@ public sealed class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery,
         if (user is null)
             return Error.NotFound("auth.user_not_found", "User not found.");
 
-        return user.ToCurrentUserResponse();
+        var role = await _roles.FirstOrDefaultAsync(r => r.Id == user.RoleId, ct);
+        return user.ToCurrentUserResponse(role?.Name ?? "Student");
     }
 }

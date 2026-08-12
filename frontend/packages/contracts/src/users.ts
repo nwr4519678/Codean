@@ -2,24 +2,30 @@ import { UserRole } from './enums';
 
 export interface StudentProfileResponse {
   userId: number;
-  bio?: string;
-  githubUrl?: string;
-  linkedinUrl?: string;
-  websiteUrl?: string;
-  enrolledCourseCount: number;
-  completedCourseCount: number;
-  solvedChallengeCount: number;
-  totalPoints: number;
+  email: string;
+  fullName: string;
+  phone?: string;
+  grade?: string;
+  school?: string;
+  parentPhone?: string;
+  parentPhone2?: string;
+  notes?: string;
 }
 
 export interface TeacherProfileResponse {
   userId: number;
-  headline?: string;
-  bio?: string;
-  expertiseKeywords: string[];
-  totalStudents: number;
-  totalCourses: number;
-  averageRating: number;
+  email: string;
+  fullName: string;
+  phone?: string;
+  biography?: string;
+  photo?: string;
+  facebook?: string;
+  youTube?: string;
+  website?: string;
+  experience?: string;
+  specialization?: string;
+  isVerified: boolean;
+  approvedAt?: string;
 }
 
 export interface AdminUserItem {

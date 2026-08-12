@@ -13,16 +13,21 @@ export interface UserDto {
 }
 
 export interface CurrentUserResponse {
-  id: number;
+  userId: number;
+  id?: number;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  role: string;
   avatarUrl?: string;
   emailConfirmed: boolean;
-  twoFactorEnabled: boolean;
-  roles: string[];
-  permissions: string[];
+  twoFactorEnabled?: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  roles?: string[];
+  permissions?: string[];
 }
 
 export interface LoginResponse {

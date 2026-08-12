@@ -21,6 +21,7 @@ namespace Platform.Application.Features.Authentication.Commands.Login;
 public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
 {
     private readonly IRepository<User> _users;
+    private readonly IRepository<Role> _roles;
     private readonly IRepository<Domain.Entities.RefreshToken> _refreshTokens;
     private readonly IRepository<UserSession> _userSessions;
     private readonly IRepository<AuditLog> _auditLogs;
@@ -33,6 +34,7 @@ public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<LoginRes
 
     public LoginHandler(
         IRepository<User> users,
+        IRepository<Role> roles,
         IRepository<Domain.Entities.RefreshToken> refreshTokens,
         IRepository<UserSession> userSessions,
         IRepository<AuditLog> auditLogs,
@@ -44,6 +46,7 @@ public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<LoginRes
         IOptions<LockoutSettings> lockout)
     {
         _users         = users;
+        _roles         = roles;
         _refreshTokens = refreshTokens;
         _userSessions  = userSessions;
         _auditLogs     = auditLogs;
@@ -100,7 +103,8 @@ public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<LoginRes
             return Error.Forbidden("auth.account_disabled", "Your account has been disabled.");
 
         // ── Issue tokens ──────────────────────────────────────────────────────────
-        var roleName    = ResolveRole(user.RoleId);
+        var role        = await _roles.FirstOrDefaultAsync(r => r.Id == user.RoleId, ct);
+        var roleName    = role?.Name ?? "Student";
         var permissions = BuildPermissions(roleName);
         var lifetime    = cmd.RememberMe ? TimeSpan.FromDays(7) : TimeSpan.FromMinutes(15);
 

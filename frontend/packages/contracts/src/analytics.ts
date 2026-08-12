@@ -1,10 +1,21 @@
+export interface MonthlyEnrollmentPoint {
+  year: number;
+  month: number;
+  count: number;
+}
+
 export interface PlatformOverviewResponse {
+  totalUsers: number;
   totalStudents: number;
   totalTeachers: number;
-  totalCourses: number;
+  activeCourses: number;
   totalSubmissions: number;
-  monthlyRevenue: number;
-  activeUsersToday: number;
+  totalRevenue: number;
+  newStudentsThisMonth: number;
+  newTeachersThisMonth: number;
+  passedSubmissions: number;
+  monthlyEnrollments: MonthlyEnrollmentPoint[];
+  generatedAt: string;
 }
 
 export interface AuditLogResponse {

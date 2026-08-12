@@ -29,6 +29,10 @@ public sealed record GetAuditLogsPagedQuery(
     string? EntityType = null
 ) : IRequest<Result<PagedList<AuditLogResponse>>>;
 
+// ── Monthly Enrollment chart data ─────────────────────────────────────────
+
+public sealed record MonthlyEnrollmentPoint(int Year, int Month, int Count);
+
 // ── Platform Overview Analytics DTOs ──────────────────────────────────────
 
 public sealed record PlatformOverviewResponse(
@@ -38,6 +42,10 @@ public sealed record PlatformOverviewResponse(
     int ActiveCourses,
     int TotalSubmissions,
     decimal TotalRevenue,
+    int NewStudentsThisMonth,
+    int NewTeachersThisMonth,
+    int PassedSubmissions,
+    IReadOnlyList<MonthlyEnrollmentPoint> MonthlyEnrollments,
     DateTime GeneratedAt
 );
 

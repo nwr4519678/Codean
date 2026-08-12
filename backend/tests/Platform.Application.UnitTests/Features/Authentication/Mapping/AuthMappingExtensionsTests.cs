@@ -52,7 +52,7 @@ public class AuthMappingExtensionsTests
     }
 
     [Fact]
-    public void ToCurrentUserResponse_ShouldMapRoleIdToRoleName()
+    public void ToCurrentUserResponse_ShouldUseResolvedRoleName()
     {
         // Arrange
         var student = new User { Id = 1, RoleId = 1, Email = "s@test.com", FullName = "Student" };
@@ -60,9 +60,9 @@ public class AuthMappingExtensionsTests
         var admin = new User { Id = 3, RoleId = 3, Email = "a@test.com", FullName = "Admin" };
 
         // Act & Assert
-        student.ToCurrentUserResponse().Role.Should().Be("Student");
-        teacher.ToCurrentUserResponse().Role.Should().Be("Teacher");
-        admin.ToCurrentUserResponse().Role.Should().Be("Admin");
+        student.ToCurrentUserResponse("Student").Role.Should().Be("Student");
+        teacher.ToCurrentUserResponse("Teacher").Role.Should().Be("Teacher");
+        admin.ToCurrentUserResponse("Admin").Role.Should().Be("Admin");
     }
 
     [Fact]

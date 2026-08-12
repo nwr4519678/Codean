@@ -51,13 +51,13 @@ public static class AuthenticationMappingExtensions
 
     // ── User → CurrentUserResponse ────────────────────────────────────────────
 
-    public static CurrentUserResponse ToCurrentUserResponse(this User user) =>
+    public static CurrentUserResponse ToCurrentUserResponse(this User user, string roleName = "Student") =>
         new(
             UserId:         user.Id,
             Email:          user.Email,
             FullName:       user.FullName,
             Phone:          user.Phone,
-            Role:           user.RoleId switch { 2 => "Teacher", 3 => "Admin", _ => "Student" },
+            Role:           roleName,
             EmailConfirmed: user.EmailConfirmed,
             LastLogin:      user.LastLogin,
             CreatedAt:      user.CreatedAt);

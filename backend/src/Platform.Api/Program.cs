@@ -45,12 +45,13 @@ try
     {
         var db     = scope.ServiceProvider.GetRequiredService<Platform.Infrastructure.Persistence.Context.AppDbContext>();
         var seeder = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var hasher = scope.ServiceProvider.GetService<Platform.Application.Common.Contracts.Authentication.IPasswordHasher>();
 
         // Apply any pending EF migrations automatically
         await db.Database.MigrateAsync();
 
-        // Seed core reference data (Roles etc.)
-        await Platform.Infrastructure.Persistence.DatabaseSeeder.SeedAsync(db, seeder);
+        // Seed core reference data (Roles etc.) & dev admin account in development mode only
+        await Platform.Infrastructure.Persistence.DatabaseSeeder.SeedAsync(db, seeder, app.Environment.IsDevelopment(), hasher);
     }
 
     app.Run();

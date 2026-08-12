@@ -18,6 +18,7 @@ namespace Platform.Application.UnitTests.Features.Authentication.Commands;
 public class LoginHandlerTests
 {
     private readonly IRepository<User> _users = Substitute.For<IRepository<User>>();
+    private readonly IRepository<Role> _roles = Substitute.For<IRepository<Role>>();
     private readonly IRepository<RefreshToken> _refreshTokens = Substitute.For<IRepository<RefreshToken>>();
     private readonly IRepository<UserSession> _userSessions = Substitute.For<IRepository<UserSession>>();
     private readonly IRepository<AuditLog> _auditLogs = Substitute.For<IRepository<AuditLog>>();
@@ -41,6 +42,7 @@ public class LoginHandlerTests
 
         _sut = new LoginHandler(
             _users,
+            _roles,
             _refreshTokens,
             _userSessions,
             _auditLogs,

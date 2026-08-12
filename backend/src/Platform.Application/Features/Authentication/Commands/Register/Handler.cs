@@ -73,15 +73,15 @@ public sealed class RegisterHandler : IRequestHandler<RegisterCommand, Result<Re
 
         var user = new User
         {
-            FullName      = cmd.FullName.Trim(),
-            Email         = normalizedEmail,
-            Phone         = cmd.Phone?.Trim(),
-            PasswordHash  = hash,
-            RoleId        = role.Id,
-            IsActive      = true,
-            EmailConfirmed = false,
-            CreatedAt     = now,
-            UpdatedAt     = now
+            FullName       = cmd.FullName.Trim(),
+            Email          = normalizedEmail,
+            Phone          = cmd.Phone?.Trim(),
+            PasswordHash   = hash,
+            RoleId         = role.Id,
+            IsActive       = true,
+            EmailConfirmed = _current.UserId.HasValue,
+            CreatedAt      = now,
+            UpdatedAt      = now
         };
 
         await _users.AddAsync(user, ct);

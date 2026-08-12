@@ -194,6 +194,8 @@ public class UserHandlerTests
     public class AssignUserRoleHandlerTests
     {
         private readonly IRepository<User> _users = Substitute.For<IRepository<User>>();
+        private readonly IRepository<Role> _roles = Substitute.For<IRepository<Role>>();
+        private readonly IRepository<TeacherProfile> _teacherProfiles = Substitute.For<IRepository<TeacherProfile>>();
         private readonly IRepository<AuditLog> _auditLogs = Substitute.For<IRepository<AuditLog>>();
         private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
         private readonly ICurrentUser _current = Substitute.For<ICurrentUser>();
@@ -205,7 +207,7 @@ public class UserHandlerTests
         {
             _clock.UtcNow.Returns(_now);
             _current.UserId.Returns(1L);
-            _sut = new AssignUserRoleHandler(_users, _auditLogs, _uow, _current, _clock);
+            _sut = new AssignUserRoleHandler(_users, _roles, _teacherProfiles, _auditLogs, _uow, _current, _clock);
         }
 
         [Fact]
@@ -231,6 +233,8 @@ public class UserHandlerTests
         {
             var user = new User { Id = 5, RoleId = 1 };
             _users.GetByIdAsync(5L, Arg.Any<CancellationToken>()).Returns(user);
+            _roles.FirstOrDefaultAsync(Arg.Any<Expression<Func<Role, bool>>>(), Arg.Any<CancellationToken>())
+                  .Returns(new Role { Id = 2, Name = "Teacher" });
 
             var result = await _sut.Handle(new AssignUserRoleCommand(5L, 2), CancellationToken.None);
 

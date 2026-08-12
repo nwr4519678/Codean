@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Authorization;
 using Platform.Application.Common.Pagination;
+using Platform.Application.Features.Authentication.Dtos;
 using Platform.Application.Features.Users.Dtos;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -74,7 +75,49 @@ public sealed class UsersController : ApiController
         var result = await _sender.Send(new AssignUserRoleCommand(id, request.RoleId), ct);
         return result.IsSuccess ? NoContent() : MapError(result.Error);
     }
+
+    /// <summary>Deletes a user account (admin only).</summary>
+    [HttpDelete("{id:long}")]
+    [HasPermission("users.manage")]
+    [SwaggerOperation(Summary = "Delete User", Tags = ["Users"])]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteUser([FromRoute] long id, CancellationToken ct)
+    {
+        var result = await _sender.Send(new DeleteUserCommand(id), ct);
+        return result.IsSuccess ? NoContent() : MapError(result.Error);
+    }
+
+    /// <summary>Creates a new user account (admin only). Bypasses the public registration rate limiter.</summary>
+    [HttpPost]
+    [HasPermission("users.manage")]
+    [SwaggerOperation(Summary = "Admin Create User", Tags = ["Users"])]
+    [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> CreateUser([FromBody] AdminCreateUserRequest request, CancellationToken ct)
+    {
+        var cmd = new RegisterCommand(
+            FullName: $"{request.FirstName.Trim()} {request.LastName.Trim()}".Trim(),
+            Email:    request.Email,
+            Password: request.Password,
+            Role:     request.Role);
+
+        var result = await _sender.Send(cmd, ct);
+        return result.IsSuccess
+            ? CreatedAtAction(nameof(GetUserById), new { id = result.Value!.UserId }, result.Value)
+            : MapError(result.Error);
+    }
 }
 
 public sealed record SetUserStatusRequest(bool IsActive);
 public sealed record AssignRoleRequest(int RoleId);
+
+/// <summary>Request body for admin-created user accounts.</summary>
+public sealed record AdminCreateUserRequest(
+    string FirstName,
+    string LastName,
+    string Email,
+    string Password,
+    string Role = "Teacher");
