@@ -23,5 +23,17 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "pnpm@11.20.0"
+  "packageManager": "pnpm@11.20.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ],
+      "allowAny": [
+        "react",
+        "react-dom"
+      ]
+    }
+  }
 }

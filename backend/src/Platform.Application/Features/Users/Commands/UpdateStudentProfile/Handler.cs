@@ -34,6 +34,15 @@ public sealed class UpdateStudentProfileHandler : IRequestHandler<UpdateStudentP
             return Error.Unauthorized("auth.unauthenticated", "You must be logged in.");
 
         var userId = _current.UserId.Value;
+        var user = await _users.GetByIdAsync(userId, ct);
+        if (user is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(cmd.FullName)) user.FullName = cmd.FullName.Trim();
+            if (cmd.Phone is not null) user.Phone = cmd.Phone.Trim();
+            user.UpdatedAt = System.DateTime.UtcNow;
+            _users.Update(user);
+        }
+
         var profile = await _studentProfiles.GetByIdAsync(userId, ct);
 
         if (profile is null)
@@ -60,7 +69,6 @@ public sealed class UpdateStudentProfileHandler : IRequestHandler<UpdateStudentP
         }
 
         await _uow.SaveChangesAsync(ct);
-        var user = await _users.GetByIdAsync(userId, ct);
         profile.User = user!;
 
         return profile.ToStudentProfileResponse();

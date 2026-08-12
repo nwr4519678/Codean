@@ -34,6 +34,15 @@ public sealed class UpdateTeacherProfileHandler : IRequestHandler<UpdateTeacherP
             return Error.Unauthorized("auth.unauthenticated", "You must be logged in.");
 
         var userId = _current.UserId.Value;
+        var user = await _users.GetByIdAsync(userId, ct);
+        if (user is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(cmd.FullName)) user.FullName = cmd.FullName.Trim();
+            if (cmd.Phone is not null) user.Phone = cmd.Phone.Trim();
+            user.UpdatedAt = System.DateTime.UtcNow;
+            _users.Update(user);
+        }
+
         var profile = await _teacherProfiles.GetByIdAsync(userId, ct);
 
         if (profile is null)
@@ -42,18 +51,20 @@ public sealed class UpdateTeacherProfileHandler : IRequestHandler<UpdateTeacherP
             {
                 UserId = userId,
                 Biography = cmd.Biography,
+                Photo = cmd.Photo,
                 Facebook = cmd.Facebook,
                 YouTube = cmd.YouTube,
                 Website = cmd.Website,
                 Experience = cmd.Experience,
                 Specialization = cmd.Specialization,
-                IsVerified = false
+                IsVerified = true
             };
             await _teacherProfiles.AddAsync(profile, ct);
         }
         else
         {
             profile.Biography = cmd.Biography;
+            if (!string.IsNullOrWhiteSpace(cmd.Photo)) profile.Photo = cmd.Photo;
             profile.Facebook = cmd.Facebook;
             profile.YouTube = cmd.YouTube;
             profile.Website = cmd.Website;
@@ -63,7 +74,6 @@ public sealed class UpdateTeacherProfileHandler : IRequestHandler<UpdateTeacherP
         }
 
         await _uow.SaveChangesAsync(ct);
-        var user = await _users.GetByIdAsync(userId, ct);
         profile.User = user!;
 
         return profile.ToTeacherProfileResponse();

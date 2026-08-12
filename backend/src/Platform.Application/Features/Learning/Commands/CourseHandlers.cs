@@ -58,7 +58,6 @@ public sealed class CreateCourseHandler : IRequestHandler<CreateCourseCommand, R
                 Biography  = string.Empty,
                 IsVerified = true
             }, ct);
-            await _uow.SaveChangesAsync(ct);
         }
 
         var course = new Course

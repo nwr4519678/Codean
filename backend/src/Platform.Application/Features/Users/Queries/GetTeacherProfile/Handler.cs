@@ -22,12 +22,13 @@ public sealed class GetTeacherProfileHandler : IRequestHandler<GetTeacherProfile
 
     public async Task<Result<TeacherProfileResponse>> Handle(GetTeacherProfileQuery query, CancellationToken ct)
     {
-        var profile = await _teacherProfiles.GetByIdAsync(query.UserId, ct);
-        if (profile is null)
-            return Error.NotFound("users.teacher_profile_not_found", "Teacher profile not found.");
-
         var user = await _users.GetByIdAsync(query.UserId, ct);
-        profile.User = user!;
+        if (user is null)
+            return Error.NotFound("users.user_not_found", "User not found.");
+
+        var profile = await _teacherProfiles.GetByIdAsync(query.UserId, ct)
+                      ?? new TeacherProfile { UserId = query.UserId, IsVerified = true };
+        profile.User = user;
 
         return profile.ToTeacherProfileResponse();
     }

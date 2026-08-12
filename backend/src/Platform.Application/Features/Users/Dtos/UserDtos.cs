@@ -23,6 +23,7 @@ public sealed record TeacherProfileResponse(
     long UserId,
     string Email,
     string FullName,
+    string? Phone,
     string? Biography,
     string? Photo,
     string? Facebook,
@@ -37,6 +38,7 @@ public sealed record StudentProfileResponse(
     long UserId,
     string Email,
     string FullName,
+    string? Phone,
     string? Grade,
     string? School,
     string? ParentPhone,
@@ -51,20 +53,25 @@ public sealed record AvatarUploadResponse(
 // ── Command DTOs ──────────────────────────────────────────────────────────────
 
 public sealed record UpdateTeacherProfileCommand(
-    string? Biography,
-    string? Facebook,
-    string? YouTube,
-    string? Website,
-    string? Experience,
-    string? Specialization)
+    string? Biography = null,
+    string? Facebook = null,
+    string? YouTube = null,
+    string? Website = null,
+    string? Experience = null,
+    string? Specialization = null,
+    string? FullName = null,
+    string? Phone = null,
+    string? Photo = null)
     : IRequest<Result<TeacherProfileResponse>>;
 
 public sealed record UpdateStudentProfileCommand(
-    string? Grade,
-    string? School,
-    string? ParentPhone,
-    string? ParentPhone2,
-    string? Notes)
+    string? Grade = null,
+    string? School = null,
+    string? ParentPhone = null,
+    string? ParentPhone2 = null,
+    string? Notes = null,
+    string? FullName = null,
+    string? Phone = null)
     : IRequest<Result<StudentProfileResponse>>;
 
 public sealed record SetUserStatusCommand(
@@ -75,6 +82,9 @@ public sealed record SetUserStatusCommand(
 public sealed record AssignUserRoleCommand(
     long UserId,
     int RoleId)
+    : IRequest<Result>;
+
+public sealed record DeleteUserCommand(long UserId)
     : IRequest<Result>;
 
 public sealed record UploadUserAvatarCommand(

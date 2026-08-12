@@ -24,6 +24,7 @@ export const API_URLS = {
     STUDENT_AVATAR_UPLOAD: '/api/students/me/avatar/upload-url',
     TEACHER_AVATAR_UPLOAD: '/api/teachers/me/avatar/upload-url',
     USERS_PAGED: '/api/users',
+    CREATE_USER: '/api/users',
     ASSIGN_ROLE: (userId: number | string) => `/api/users/${userId}/role`,
     SET_STATUS: (userId: number | string) => `/api/users/${userId}/status`,
   },

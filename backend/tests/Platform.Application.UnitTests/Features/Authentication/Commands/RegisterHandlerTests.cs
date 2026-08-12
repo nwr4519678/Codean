@@ -17,6 +17,8 @@ namespace Platform.Application.UnitTests.Features.Authentication.Commands;
 public class RegisterHandlerTests
 {
     private readonly IRepository<User> _users = Substitute.For<IRepository<User>>();
+    private readonly IRepository<Role> _roles = Substitute.For<IRepository<Role>>();
+    private readonly IRepository<TeacherProfile> _teacherProfiles = Substitute.For<IRepository<TeacherProfile>>();
     private readonly IRepository<AuditLog> _auditLogs = Substitute.For<IRepository<AuditLog>>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
@@ -33,6 +35,8 @@ public class RegisterHandlerTests
 
         _sut = new RegisterHandler(
             _users,
+            _roles,
+            _teacherProfiles,
             _auditLogs,
             _uow,
             _hasher,
@@ -64,6 +68,8 @@ public class RegisterHandlerTests
         var cmd = new RegisterCommand(" John Doe ", " USER@Domain.com ", "Password123!", " 123456 ");
         _users.AnyAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>())
               .Returns(false);
+        _roles.FirstOrDefaultAsync(Arg.Any<Expression<Func<Role, bool>>>(), Arg.Any<CancellationToken>())
+              .Returns(new Role { Id = 1, Name = "Student" });
 
         // Act
         var result = await _sut.Handle(cmd, CancellationToken.None);

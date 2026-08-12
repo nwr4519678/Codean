@@ -33,6 +33,11 @@ export const coursesApi = {
     return res.data;
   },
 
+  archiveCourse: async (id: number | string): Promise<boolean> => {
+    const res = await apiClient.post<boolean>(API_URLS.COURSES.ARCHIVE(id));
+    return res.data;
+  },
+
   trackProgress: async (payload: { lessonId: number; watchTimeSeconds: number; completionPercentage: number }): Promise<StudentProgressResponse> => {
     const res = await apiClient.post<StudentProgressResponse>(API_URLS.COURSES.PROGRESS, payload);
     return res.data;

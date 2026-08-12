@@ -44,13 +44,25 @@ public abstract class ApiController : ControllerBase
         };
     }
 
-    protected ProblemDetails Problem(Error error, int status) => new()
+    protected ProblemDetails Problem(Error error, int status)
     {
-        Status   = status,
-        Title    = error.Code,
-        Detail   = error.Message,
-        Instance = HttpContext.Request.Path
-    };
+        var pd = new ProblemDetails
+        {
+            Status   = status,
+            Title    = error.Code,
+            Detail   = error.Message,
+            Instance = HttpContext.Request.Path
+        };
+
+        // Include FluentValidation field-level errors in extensions.errors
+        if (error.Metadata is { Count: > 0 })
+        {
+            foreach (var kv in error.Metadata)
+                pd.Extensions[kv.Key] = kv.Value;
+        }
+
+        return pd;
+    }
 
     // ── JWT Claim Helpers ─────────────────────────────────────────────────────
 

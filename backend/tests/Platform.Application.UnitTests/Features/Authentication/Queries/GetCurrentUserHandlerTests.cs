@@ -14,12 +14,13 @@ namespace Platform.Application.UnitTests.Features.Authentication.Queries;
 public class GetCurrentUserHandlerTests
 {
     private readonly IRepository<User> _users = Substitute.For<IRepository<User>>();
+    private readonly IRepository<Role> _roles = Substitute.For<IRepository<Role>>();
     private readonly ICurrentUser _current = Substitute.For<ICurrentUser>();
     private readonly GetCurrentUserHandler _sut;
 
     public GetCurrentUserHandlerTests()
     {
-        _sut = new GetCurrentUserHandler(_users, _current);
+        _sut = new GetCurrentUserHandler(_users, _roles, _current);
     }
 
     [Fact]

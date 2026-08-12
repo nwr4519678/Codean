@@ -6,7 +6,6 @@ using MediatR;
 using Platform.Application.Common.Abstractions;
 using Platform.Application.Common.Pagination;
 using Platform.Application.Features.Users.Dtos;
-using Platform.Application.Features.Users.Mapping;
 using Platform.Domain.Entities;
 using Platform.Domain.Results;
 
@@ -15,33 +14,47 @@ namespace Platform.Application.Features.Users.Queries.GetUsersPaged;
 public sealed class GetUsersPagedHandler : IRequestHandler<GetUsersPagedQuery, Result<PagedList<UserResponse>>>
 {
     private readonly IRepository<User> _users;
+    private readonly IRepository<Role> _roles;
 
-    public GetUsersPagedHandler(IRepository<User> users)
+    public GetUsersPagedHandler(IRepository<User> users, IRepository<Role> roles)
     {
         _users = users;
+        _roles = roles;
     }
 
     public async Task<Result<PagedList<UserResponse>>> Handle(GetUsersPagedQuery query, CancellationToken ct)
     {
-        var q = _users.Query();
+        var usersQ = _users.Query();
+        var rolesQ = _roles.Query();
 
         if (query.RoleId.HasValue)
-            q = q.Where(u => u.RoleId == query.RoleId.Value);
+            usersQ = usersQ.Where(u => u.RoleId == query.RoleId.Value);
 
         if (query.IsActive.HasValue)
-            q = q.Where(u => u.IsActive == query.IsActive.Value);
+            usersQ = usersQ.Where(u => u.IsActive == query.IsActive.Value);
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim();
-            q = q.Where(u => u.FullName.Contains(search) || u.Email.Contains(search));
+            usersQ = usersQ.Where(u => u.FullName.Contains(search) || u.Email.Contains(search));
         }
 
-        q = q.OrderByDescending(u => u.CreatedAt);
+        // Join with Roles table so role name is resolved from actual DB data, not hardcoded IDs
+        var projected = from u in usersQ.OrderByDescending(u => u.CreatedAt)
+                        join r in rolesQ on u.RoleId equals r.Id into rg
+                        from role in rg.DefaultIfEmpty()
+                        select new UserResponse(
+                            u.Id,
+                            u.Email,
+                            u.FullName,
+                            u.Phone,
+                            role != null ? role.Name : "Student",
+                            u.IsActive,
+                            u.EmailConfirmed,
+                            u.LastLogin,
+                            u.CreatedAt);
 
-        var projected = q.Select(u => u.ToUserResponse());
         var paged = await PagedList<UserResponse>.CreateAsync(projected, query.PageNumber, query.PageSize, ct);
-
         return paged;
     }
 }

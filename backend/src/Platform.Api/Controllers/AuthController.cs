@@ -38,7 +38,9 @@ public sealed class AuthController : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Register([FromBody] RegisterCommand cmd, CancellationToken ct)
     {
-        var result = await _sender.Send(cmd, ct);
+        // Public registration is always Student — Teachers are created by admins only.
+        var studentCmd = cmd with { Role = "Student" };
+        var result = await _sender.Send(studentCmd, ct);
         return result.IsSuccess
             ? CreatedAtAction(nameof(GetCurrentUser), null, result.Value)
             : MapError(result.Error);

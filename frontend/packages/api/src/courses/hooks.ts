@@ -45,3 +45,23 @@ export const useUpdateCourse = () => {
     },
   });
 };
+
+export const usePublishCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number | string) => coursesApi.publishCourse(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
+    },
+  });
+};
+
+export const useArchiveCourse = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number | string) => coursesApi.archiveCourse(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
+    },
+  });
+};
