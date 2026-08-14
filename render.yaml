@@ -15,8 +15,6 @@ services:
         value: "true"
       - key: ConnectionStrings__DefaultConnection
         sync: false
-      - key: Redis__Configuration
-        sync: false
       - key: Jwt__Secret
         sync: false
       - key: Jwt__SigningKeySecret
