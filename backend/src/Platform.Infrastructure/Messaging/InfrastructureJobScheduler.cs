@@ -29,10 +29,5 @@ public static class InfrastructureJobScheduler
             job => job.ExecuteAsync(),
             Cron.Daily(hour: 2));
 
-        // Judge result reconciliation — every 2 minutes
-        RecurringJob.AddOrUpdate<ProcessJudgeResultsJob>(
-            "judge-results-reconciler",
-            job => job.ExecuteAsync(CancellationToken.None),
-            "*/2 * * * *");
     }
 }

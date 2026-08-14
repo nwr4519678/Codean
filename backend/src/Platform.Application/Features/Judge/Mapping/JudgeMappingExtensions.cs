@@ -24,7 +24,7 @@ public static class JudgeMappingExtensions
         CodeExecutionResult? executionResult = null) =>
         new(
             submission.Id,
-            submission.ExecutionResult ?? string.Empty,   // stores executionId
+            executionResult?.ExecutionId ?? string.Empty,
             executionResult?.Status.ToString() ?? submission.Status ?? "Pending",
             executionResult?.Verdict?.ToString(),
             executionResult?.PassedTestCases ?? 0,

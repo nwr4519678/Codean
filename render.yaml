@@ -21,3 +21,7 @@ services:
         sync: false
       - key: Cors__AllowedOrigins
         sync: false
+      - key: Judge__ApiKey
+        sync: false
+      - key: Judge__BaseUrl
+        value: https://api.onlinecompiler.io/

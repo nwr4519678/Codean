@@ -7,7 +7,7 @@ public sealed class CreateCodingChallengeCommandValidator : AbstractValidator<Cr
 {
     private static readonly HashSet<string> SupportedLanguages =
     [
-        "python", "python3", "csharp", "java", "cpp", "c", "javascript", "typescript", "go", "rust"
+        "python", "python3", "csharp", "c#", "javascript", "js", "html", "css"
     ];
 
     public CreateCodingChallengeCommandValidator()
@@ -38,7 +38,7 @@ public sealed class SubmitCodeChallengeCommandValidator : AbstractValidator<Subm
 {
     private static readonly HashSet<string> SupportedLanguages =
     [
-        "python", "python3", "csharp", "java", "cpp", "c", "javascript", "typescript", "go", "rust"
+        "python", "python3", "csharp", "c#", "javascript", "js"
     ];
 
     public SubmitCodeChallengeCommandValidator()

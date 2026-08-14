@@ -49,17 +49,17 @@ public sealed record GetCodingChallengesQuery()
 // ── Code Submission DTOs ──────────────────────────────────────────────────
 
 /// <summary>
-/// Returned immediately after enqueuing. Clients poll for the result.
+/// Returned immediately after the external compiler finishes.
 /// </summary>
 public sealed record SubmitCodeResponse(
     long SubmissionId,
     string ExecutionId,
-    string Status,   // "Queued"
+    string Status,
     DateTime SubmittedAt
 );
 
 /// <summary>
-/// Detailed result once the judge worker has completed processing.
+/// Detailed result returned by the external compiler adapter.
 /// </summary>
 public sealed record CodeSubmissionResultResponse(
     long SubmissionId,
@@ -75,8 +75,7 @@ public sealed record CodeSubmissionResultResponse(
 );
 
 /// <summary>
-/// Fire-and-forget: enqueues the submission to the judge, stores pending status.
-/// Returns immediately with ExecutionId for polling.
+/// Sends source code to the external compiler API and stores the result.
 /// </summary>
 public sealed record SubmitCodeChallengeCommand(
     long ChallengeId,

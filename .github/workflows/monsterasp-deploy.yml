@@ -31,21 +31,23 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore backend/src/Platform.Api/Platform.Api.csproj
+        run: dotnet restore backend/Platform.slnx --runtime win-x86
 
       - name: Build
-        run: dotnet build backend/src/Platform.Api/Platform.Api.csproj --configuration Release --no-restore
+        run: dotnet build backend/Platform.slnx --configuration Release --no-restore --maxcpucount:1
 
       - name: Test application layer
-        run: dotnet test backend/tests/Platform.Application.UnitTests/Platform.Application.UnitTests.csproj --configuration Release --no-restore
+        run: dotnet test backend/Platform.slnx --configuration Release --no-restore --maxcpucount:1
 
       - name: Publish for IIS
         run: dotnet publish backend/src/Platform.Api/Platform.Api.csproj --configuration Release --no-restore --output ./publish --runtime win-x86 --self-contained false
 
       - name: Deploy to MonsterASP via Web Deploy
-        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
+        uses: rasmusbuchholdt/simply-web-deploy@2.2.0
         with:
           website-name: ${{ secrets.MONSTERASP_WEBSITE_NAME }}
           server-computer-name: ${{ secrets.MONSTERASP_SERVER_COMPUTER_NAME }}
           server-username: ${{ secrets.MONSTERASP_SERVER_USERNAME }}
           server-password: ${{ secrets.MONSTERASP_SERVER_PASSWORD }}
+          source-path: '\publish\'
+          target-delete: true

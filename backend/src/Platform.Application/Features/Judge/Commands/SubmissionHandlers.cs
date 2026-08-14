@@ -15,18 +15,13 @@ using Platform.Domain.Results;
 namespace Platform.Application.Features.Judge.Commands;
 
 /// <summary>
-/// Enqueues a code submission to the Judge Engine asynchronously.
+/// Executes a code submission through the configured external compiler API.
 ///
 /// Flow:
 ///   1. Validate challenge exists.
-///   2. Create a CodingSubmission row with Status = "Queued".
-///   3. Call IJudgeService.SubmitAsync — this is a fire-and-forget to the judge worker.
-///   4. Store the returned ExecutionId on the submission row.
-///   5. Return immediately with SubmissionId + ExecutionId so the client can poll.
-///
-/// The judge worker (Platform.Judge.Worker) will eventually call back via
-/// GetResultAsync, and a Hangfire job (ProcessJudgeResultsJob) will reconcile
-/// final scores in the database.
+///   2. Create a submission row.
+///   3. Send the source to the external provider.
+///   4. Store the provider result and return it immediately.
 /// </summary>
 public sealed class SubmitCodeChallengeHandler
     : IRequestHandler<SubmitCodeChallengeCommand, Result<SubmitCodeResponse>>
@@ -34,7 +29,7 @@ public sealed class SubmitCodeChallengeHandler
     private readonly IRepository<CodingChallenge> _challenges;
     private readonly IRepository<CodingSubmission> _submissions;
     private readonly IUnitOfWork _uow;
-    private readonly IJudgeService _judgeService;
+    private readonly IJudgeService _codeExecutionService;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
 
@@ -42,14 +37,14 @@ public sealed class SubmitCodeChallengeHandler
         IRepository<CodingChallenge> challenges,
         IRepository<CodingSubmission> submissions,
         IUnitOfWork uow,
-        IJudgeService judgeService,
+        IJudgeService codeExecutionService,
         ICurrentUser currentUser,
         IClock clock)
     {
         _challenges   = challenges;
         _submissions  = submissions;
         _uow          = uow;
-        _judgeService = judgeService;
+        _codeExecutionService = codeExecutionService;
         _currentUser  = currentUser;
         _clock        = clock;
     }
@@ -77,7 +72,7 @@ public sealed class SubmitCodeChallengeHandler
             StudentId         = studentId,
             SourceCode        = request.SourceCode,
             SubmittedAt       = now,
-            Status            = "Queued",
+            Status            = "Running",
             Score             = null,
             ExecutionResult   = null   // will hold executionId after enqueue
         };
@@ -99,20 +94,23 @@ public sealed class SubmitCodeChallengeHandler
             TestCases:     testCaseDtos
         );
 
-        // 5. Fire-and-forget — judge worker picks this up from the queue asynchronously
-        var judgeResponse = await _judgeService.SubmitAsync(judgeRequest, ct);
-
-        // 6. Persist executionId so GetSubmissionStatus can look it up later
-        submission.ExecutionResult = judgeResponse.ExecutionId;
-        submission.Status = "Queued";
+        // 5. Execute synchronously through the external provider. The provider
+        // owns sandboxing, compilation, runtime limits, and isolation.
+        var executionResult = await _codeExecutionService.ExecuteAsync(judgeRequest, ct);
+        var serializedResult = JsonSerializer.Serialize(executionResult);
+        submission.ExecutionResult = serializedResult;
+        submission.Status = executionResult.Status.ToString();
+        submission.Score = executionResult.TotalTestCases > 0
+            ? Math.Round((decimal)executionResult.PassedTestCases / executionResult.TotalTestCases * 100, 2)
+            : executionResult.Verdict == Verdict.Accepted ? 100 : 0;
 
         _submissions.Update(submission);
         await _uow.SaveChangesAsync(ct);
 
         return Result<SubmitCodeResponse>.Success(new SubmitCodeResponse(
             submission.Id,
-            judgeResponse.ExecutionId,
-            "Queued",
+            executionResult.ExecutionId,
+            executionResult.Status.ToString(),
             now
         ));
     }
@@ -136,24 +134,19 @@ public sealed class SubmitCodeChallengeHandler
 }
 
 /// <summary>
-/// Polls the judge service for the result of a previously submitted execution.
-/// Updates the submission row with final score/verdict once complete.
+/// Returns the provider result already persisted with the submission.
 /// </summary>
 public sealed class GetSubmissionStatusHandler
     : IRequestHandler<GetSubmissionStatusQuery, Result<CodeSubmissionResultResponse>>
 {
     private readonly IRepository<CodingSubmission> _submissions;
-    private readonly IJudgeService _judgeService;
-    private readonly IUnitOfWork _uow;
 
     public GetSubmissionStatusHandler(
         IRepository<CodingSubmission> submissions,
-        IJudgeService judgeService,
+        IJudgeService codeExecutionService,
         IUnitOfWork uow)
     {
         _submissions  = submissions;
-        _judgeService = judgeService;
-        _uow          = uow;
     }
 
     public async Task<Result<CodeSubmissionResultResponse>> Handle(
@@ -164,29 +157,15 @@ public sealed class GetSubmissionStatusHandler
             return Result<CodeSubmissionResultResponse>.Failure(
                 Error.NotFound("submissions.not_found", $"Submission {request.SubmissionId} not found."));
 
-        var executionId = submission.ExecutionResult;
-        if (string.IsNullOrWhiteSpace(executionId))
+        if (string.IsNullOrWhiteSpace(submission.ExecutionResult))
             return Result<CodeSubmissionResultResponse>.Success(submission.ToResultResponse());
 
-        // Try to get result from judge
-        var executionResult = await _judgeService.GetResultAsync(executionId, ct);
-
-        // If judge has finished, reconcile final score
-        if (executionResult is not null &&
-            executionResult.Status is ExecutionStatus.Completed or ExecutionStatus.Failed)
+        CodeExecutionResult? executionResult = null;
+        try
         {
-            var verdict = executionResult.Verdict?.ToString() ?? "Unknown";
-            var passed  = executionResult.PassedTestCases;
-            var total   = executionResult.TotalTestCases;
-
-            submission.Status = executionResult.Status.ToString();
-            submission.Score  = total > 0
-                ? Math.Round((decimal)passed / total * 100, 2)
-                : 0;
-
-            _submissions.Update(submission);
-            await _uow.SaveChangesAsync(ct);
+            executionResult = JsonSerializer.Deserialize<CodeExecutionResult>(submission.ExecutionResult);
         }
+        catch (JsonException) { }
 
         return Result<CodeSubmissionResultResponse>.Success(
             submission.ToResultResponse(executionResult));
