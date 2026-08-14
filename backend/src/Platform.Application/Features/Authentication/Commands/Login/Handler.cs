@@ -168,6 +168,7 @@ public sealed class LoginHandler : IRequestHandler<LoginCommand, Result<LoginRes
                 Permissions.HomeworksManage,
                 Permissions.ChallengesManage,
                 Permissions.AnnouncementsManage
+                ,Permissions.LiveSessionsManage
             ]);
         }
 

@@ -35,7 +35,7 @@ public sealed class LiveSessionsController : ApiController
 
     /// <summary>Schedules a new live session on Google Meet or Microsoft Teams.</summary>
     [HttpPost]
-    [HasPermission("announcements.manage")]
+    [HasPermission("live-sessions.manage")]
     [SwaggerOperation(Summary = "Schedule Live Session", Tags = ["Live Sessions"])]
     [ProducesResponseType(typeof(LiveSessionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
@@ -47,7 +47,7 @@ public sealed class LiveSessionsController : ApiController
 
     /// <summary>Cancels a scheduled or live session and best-effort deletes provider meeting.</summary>
     [HttpPost("{id:long}/cancel")]
-    [HasPermission("announcements.manage")]
+    [HasPermission("live-sessions.manage")]
     [SwaggerOperation(Summary = "Cancel Live Session", Tags = ["Live Sessions"])]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -72,7 +72,7 @@ public sealed class LiveSessionsController : ApiController
 
     /// <summary>Returns full attendance roster for a session (Teacher/Admin).</summary>
     [HttpGet("{id:long}/attendance")]
-    [HasPermission("announcements.manage")]
+    [HasPermission("live-sessions.manage")]
     [SwaggerOperation(Summary = "Get Session Attendance", Tags = ["Live Sessions"])]
     [ProducesResponseType(typeof(IReadOnlyList<AttendanceResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAttendance([FromRoute] long id, CancellationToken ct)

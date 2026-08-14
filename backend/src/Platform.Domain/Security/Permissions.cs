@@ -22,6 +22,7 @@ public static class Permissions
     public const string HomeworksManage = "homeworks.manage";
     public const string ChallengesManage = "challenges.manage";
     public const string AnnouncementsManage = "announcements.manage";
+    public const string LiveSessionsManage = "live-sessions.manage";
     public const string PlansManage = "plans.manage";
 
     public const string AnalyticsRead = "analytics:read";

@@ -27,6 +27,7 @@ public sealed class ProcessPaymobWebhookHandler
 {
     private readonly IRepository<Payment> _payments;
     private readonly IRepository<StudentSubscription> _subscriptions;
+    private readonly IRepository<SubscriptionPlan> _plans;
     private readonly IRepository<Invoice> _invoices;
     private readonly IUnitOfWork _uow;
     private readonly IPaymobClient _paymob;
@@ -35,6 +36,7 @@ public sealed class ProcessPaymobWebhookHandler
     public ProcessPaymobWebhookHandler(
         IRepository<Payment> payments,
         IRepository<StudentSubscription> subscriptions,
+        IRepository<SubscriptionPlan> plans,
         IRepository<Invoice> invoices,
         IUnitOfWork uow,
         IPaymobClient paymob,
@@ -42,6 +44,7 @@ public sealed class ProcessPaymobWebhookHandler
     {
         _payments      = payments;
         _subscriptions = subscriptions;
+        _plans        = plans;
         _invoices       = invoices;
         _uow           = uow;
         _paymob        = paymob;
@@ -65,17 +68,26 @@ public sealed class ProcessPaymobWebhookHandler
 
         // 3. Find payment record
         var payment = await _payments.FirstOrDefaultAsync(
-            p => p.TransactionId == request.TransactionId, ct);
+            p => p.TransactionId == request.TransactionId ||
+                 (!string.IsNullOrWhiteSpace(request.OrderId) && p.TransactionId == request.OrderId), ct);
 
         if (payment is null)
             return Result<bool>.Failure(
                 Error.NotFound("payments.not_found", $"Payment with TransactionId '{request.TransactionId}' not found."));
+
+        if (!string.IsNullOrWhiteSpace(request.OrderId) && payment.TransactionId != request.OrderId)
+            return Result<bool>.Failure(Error.Validation("paymob.order_mismatch", "Webhook order does not match the pending payment."));
+
+        if (request.Success && (payment.Amount != request.Amount ||
+            !string.Equals(payment.Currency, request.Currency, StringComparison.OrdinalIgnoreCase)))
+            return Result<bool>.Failure(Error.Validation("paymob.amount_mismatch", "Webhook amount or currency does not match the pending payment."));
 
         // 4. Idempotency Check — if already paid, suppress duplicate processing safely
         if (payment.Status == "Paid")
             return Result<bool>.Success(true);
 
         var now = _clock.UtcNow.UtcDateTime;
+        await using var transaction = await _uow.BeginTransactionAsync(ct);
 
         if (request.Success)
         {
@@ -83,7 +95,39 @@ public sealed class ProcessPaymobWebhookHandler
             payment.PaidAt        = now;
             payment.PaymentMethod = request.PaymentMethod ?? "Paymob";
 
-            // Generate Invoice
+            // The pending payment is created from a plan encoded in the merchant order.
+            // Resolve it from the order format and require the plan to exist before granting access.
+            var planId = TryExtractPlanId(payment.TransactionId);
+            var subscriptionPlan = planId.HasValue
+                ? await _plans.GetByIdAsync(planId.Value, ct)
+                : null;
+            if (payment.SubscriptionId is null && subscriptionPlan is null)
+                return Result<bool>.Failure(Error.Validation("paymob.plan_not_found", "The subscription plan for this payment no longer exists."));
+
+            if (payment.SubscriptionId is null)
+            {
+                var start = DateOnly.FromDateTime(now);
+                var end = start.AddMonths(subscriptionPlan!.DurationMonths);
+                var subscription = new StudentSubscription
+                {
+                    StudentId = payment.StudentId,
+                    TeacherId = subscriptionPlan.TeacherId,
+                    PlanId = subscriptionPlan.Id,
+                    MonthNumber = subscriptionPlan.MonthNumber,
+                    StartDate = start,
+                    EndDate = end,
+                    AccessExpiresAt = end,
+                    Status = "Active",
+                    CreatedAt = now
+                };
+                await _subscriptions.AddAsync(subscription, ct);
+                payment.Subscription = subscription;
+            }
+
+            // Generate Invoice once, even if a provider retries the callback.
+            var existingInvoice = await _invoices.FirstOrDefaultAsync(i => i.PaymentId == payment.Id, ct);
+            if (existingInvoice is null)
+            {
             var invoiceNumber = $"INV-{now:yyyyMMdd}-{payment.Id:D6}";
             var invoice = new Invoice
             {
@@ -96,6 +140,7 @@ public sealed class ProcessPaymobWebhookHandler
             };
 
             await _invoices.AddAsync(invoice, ct);
+            }
             _payments.Update(payment);
         }
         else
@@ -105,6 +150,13 @@ public sealed class ProcessPaymobWebhookHandler
         }
 
         await _uow.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return Result<bool>.Success(true);
+    }
+
+    private static long? TryExtractPlanId(string transactionId)
+    {
+        var parts = transactionId.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 3 && long.TryParse(parts[2], out var planId) ? planId : null;
     }
 }

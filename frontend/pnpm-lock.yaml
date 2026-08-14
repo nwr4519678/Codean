@@ -63,6 +63,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@platform/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@platform/ui':
         specifier: workspace:*
         version: link:../../packages/ui

@@ -139,12 +139,14 @@ public sealed class CancelLiveSessionHandler
         // Best-effort provider cleanup (non-blocking failure)
         if (!string.IsNullOrEmpty(session.MeetingId))
         {
-            _ = session.ProviderId switch
+            var cleanup = session.ProviderId switch
             {
                 1 => _googleMeet.DeleteMeetingAsync(session.MeetingId, ct),
                 2 => _teamsProvider.DeleteMeetingAsync(session.MeetingId, ct),
                 _ => Task.FromResult(false)
             };
+            if (!await cleanup)
+                return Result<bool>.Failure(Error.Provider("livesession.provider_cleanup_failed", "The remote meeting could not be cancelled."));
         }
 
         session.Status = "Cancelled";
@@ -253,11 +255,16 @@ public sealed class RecordAttendanceHandler
 public sealed class GetSessionAttendanceHandler
     : IRequestHandler<GetSessionAttendanceQuery, Result<IReadOnlyList<AttendanceResponse>>>
 {
+    private readonly IRepository<LiveSession> _sessions;
     private readonly IRepository<LiveAttendance> _attendance;
     private readonly ICurrentUser _currentUser;
 
-    public GetSessionAttendanceHandler(IRepository<LiveAttendance> attendance, ICurrentUser currentUser)
+    public GetSessionAttendanceHandler(
+        IRepository<LiveSession> sessions,
+        IRepository<LiveAttendance> attendance,
+        ICurrentUser currentUser)
     {
+        _sessions   = sessions;
         _attendance  = attendance;
         _currentUser = currentUser;
     }
@@ -268,6 +275,12 @@ public sealed class GetSessionAttendanceHandler
         if (!_currentUser.UserId.HasValue)
             return Result<IReadOnlyList<AttendanceResponse>>.Failure(
                 Error.Unauthorized("auth.unauthenticated", "You must be logged in."));
+
+        var session = await _sessions.GetByIdAsync(request.SessionId, ct);
+        if (session is null)
+            return Result<IReadOnlyList<AttendanceResponse>>.Failure(Error.NotFound("livesession.not_found", "Live session not found."));
+        if (session.TeacherId != _currentUser.UserId.Value && !_currentUser.IsInRole("Admin"))
+            return Result<IReadOnlyList<AttendanceResponse>>.Failure(Error.Forbidden("auth.forbidden", "You do not own this session."));
 
         var list = await _attendance.ListAsync(a => a.LiveSessionId == request.SessionId, ct);
         return Result<IReadOnlyList<AttendanceResponse>>.Success(

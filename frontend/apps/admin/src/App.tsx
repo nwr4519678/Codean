@@ -25,7 +25,6 @@ import {
   TrendingUp,
   UserPlus,
   Users,
-  Video,
   WalletCards,
   X,
 } from "lucide-react";
@@ -36,7 +35,7 @@ const ACCESS_TOKEN_KEY = "codean_admin_access_token";
 const REFRESH_TOKEN_KEY = "codean_admin_refresh_token";
 
 type AdminUser = { userId: number; email: string; fullName: string; role: string };
-type LoginResponse = AdminUser & { accessToken: string; refreshToken: string };
+type LoginResponse = AdminUser & { accessToken: string; refreshToken: string; accessTokenExpiresAt: string; refreshTokenExpiresAt: string };
 type AuthState = { user: AdminUser | null; checking: boolean; login: (email: string, password: string) => Promise<void>; logout: () => void };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -79,7 +78,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     if (result.role.toLowerCase() !== "admin") throw new Error("This console is restricted to platform administrators.");
     localStorage.setItem(ACCESS_TOKEN_KEY, result.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, result.refreshToken);
-    setUser(result);
+    setUser({ userId: result.userId, email: result.email, fullName: result.fullName, role: result.role });
   };
 
   const logout = () => {
@@ -117,7 +116,7 @@ function LoginPage() {
     event.preventDefault(); setError(""); setLoading(true);
     try { await login(email, password); navigate("/"); } catch (err) { setError(err instanceof Error ? err.message : "Unable to sign in."); } finally { setLoading(false); }
   };
-  return <main className="login-page"><section className="login-brand"><Link to="http://localhost:5173" className="brand"><span><Code2 size={21} /></span>CODEAN</Link><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><form onSubmit={submit}><span className="lock-mark"><LockKeyhole size={22} /></span><p className="kicker">Administrator access</p><h2>Sign in to the console</h2><p>Use an account with the Admin role.</p>{error && <div className="error-message">{error}</div>}<label><span>Email address</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="admin@platform.com" /></label><label><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••••••" /></label><button disabled={loading}>{loading ? "Verifying..." : "Sign in securely"}<ArrowRight size={17} /></button><small>Development: admin@platform.com / AdminPassword123!</small></form></section></main>;
+  return <main className="login-page"><section className="login-brand"><Link to="http://localhost:5173" className="brand"><span><Code2 size={21} /></span>CODEAN</Link><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><form onSubmit={submit}><span className="lock-mark"><LockKeyhole size={22} /></span><p className="kicker">Administrator access</p><h2>Sign in to the console</h2><p>Use an account with the Admin role.</p>{error && <div className="error-message">{error}</div>}<label><span>Email address</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="admin@platform.com" /></label><label><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••••••" /></label><button disabled={loading}>{loading ? "Verifying..." : "Sign in securely"}<ArrowRight size={17} /></button></form></section></main>;
 }
 
 const navItems = [
@@ -140,7 +139,11 @@ function Metric({ icon: Icon, value, label, trend }: { icon: typeof Users; value
 }
 
 function Dashboard() {
-  return <><Header eyebrow="Platform operations" title="Administration overview" copy="Monitor platform growth, learning activity, and service health." /><div className="metrics"><Metric icon={Users} value="18,420" label="Total users" trend="+12.4% this quarter" /><Metric icon={GraduationCap} value="1,284" label="Teachers" /><Metric icon={BookOpen} value="86" label="Published courses" /><Metric icon={CircleDollarSign} value="EGP 2.4m" label="Revenue" /></div><div className="dashboard-grid"><section className="panel chart-panel"><div className="panel-head"><div><p className="kicker">Growth</p><h2>Monthly enrollments</h2></div><span className="success-badge"><TrendingUp size={13} /> 18.2%</span></div><div className="bars">{[42,58,49,72,68,88,76,96,82,100,91,112].map((height, index) => <span style={{ height }} key={index} />)}</div><footer><span>Sep</span><span>Dec</span><span>Mar</span><span>Jun</span><span>Aug</span></footer></section><section className="panel services"><p className="kicker">System health</p><h2>All services operational</h2>{[[Server,"Core API","68 ms"],[Code2,"Judge workers","142 ms"],[CreditCard,"Payments","91 ms"],[Video,"Live provider","74 ms"]].map(([Icon,label,time]) => { const ServiceIcon = Icon as typeof Server; return <div key={label as string}><ServiceIcon size={17} /><span>{label as string}</span><strong>{time as string}</strong><i /></div>; })}</section></div></>;
+  const [overview, setOverview] = useState<{ totalUsers: number; totalTeachers: number; activeCourses: number; totalRevenue: number; monthlyEnrollments: { month: number; count: number }[] } | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => { apiRequest<typeof overview>("/api/analytics/overview").then(setOverview).catch((cause) => setError(cause instanceof Error ? cause.message : "Unable to load analytics.")); }, []);
+  const values = overview ?? { totalUsers: 0, totalTeachers: 0, activeCourses: 0, totalRevenue: 0, monthlyEnrollments: [] };
+  return <><Header eyebrow="Platform operations" title="Administration overview" copy="Monitor platform growth, learning activity, and service health." />{error && <div className="error-message">{error}</div>}<div className="metrics"><Metric icon={Users} value={values.totalUsers.toLocaleString()} label="Total users" /><Metric icon={GraduationCap} value={values.totalTeachers.toLocaleString()} label="Teachers" /><Metric icon={BookOpen} value={values.activeCourses.toLocaleString()} label="Published courses" /><Metric icon={CircleDollarSign} value={`EGP ${values.totalRevenue.toLocaleString()}`} label="Revenue" /></div><div className="dashboard-grid"><section className="panel chart-panel"><div className="panel-head"><div><p className="kicker">Growth</p><h2>Monthly enrollments</h2></div></div><div className="bars">{values.monthlyEnrollments.map((point, index) => <span style={{ height: Math.max(12, Math.min(112, point.count / 2)) }} key={`${point.month}-${index}`} title={`${point.count} enrollments`} />)}</div></section><section className="panel services"><p className="kicker">System health</p><h2>API health checks</h2><div><Server size={17} /><span>Core API</span><strong>Ready</strong><i /></div><div><CreditCard size={17} /><span>Payments</span><strong>Configured</strong><i /></div></section></div></>;
 }
 
 type UserRow = { name: string; email: string; role: "Student" | "Teacher" | "Admin"; status: "Active" | "Suspended" };
@@ -153,11 +156,15 @@ const initialUsers: UserRow[] = [
 ];
 
 function UsersPage() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState<UserRow[]>([]);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const loadUsers = () => { setLoading(true); apiRequest<{ items: { id: number; fullName: string; email: string; role: "Student" | "Teacher" | "Admin"; isActive: boolean }[] }>(`/api/users?pageNumber=1&pageSize=100&search=${encodeURIComponent(query)}`).then((result) => setUsers(result.items.map((user) => ({ name: user.fullName, email: user.email, role: user.role, status: user.isActive ? "Active" : "Suspended" })))).catch((cause) => setError(cause instanceof Error ? cause.message : "Unable to load users.")).finally(() => setLoading(false)); };
+  useEffect(() => { loadUsers(); }, [query]);
   const filtered = users.filter((user) => `${user.name} ${user.email}`.toLowerCase().includes(query.toLowerCase()));
-  return <><Header eyebrow="Identity and access" title="User management" copy="Create teacher accounts and manage roles and access." action={<button className="primary" onClick={() => setCreating(true)}><UserPlus size={16} /> Create teacher</button>} /><section className="panel table-panel"><div className="table-tools"><label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search users" /></label><button className="outline"><Filter size={15} /> Filters</button></div><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Last active</th><th /></tr></thead><tbody>{filtered.map((user, index) => <tr key={user.email}><td><strong>{user.name}</strong><small>{user.email}</small></td><td><span className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</span></td><td><span className={user.status === "Active" ? "status active" : "status suspended"}>{user.status}</span></td><td>Aug {index + 2}, 2026</td><td>{index + 1}h ago</td><td><button className="icon"><MoreHorizontal size={16} /></button></td></tr>)}</tbody></table></section>{creating && <CreateTeacherModal onClose={() => setCreating(false)} onCreated={(teacher) => setUsers([teacher, ...users])} />}</>;
+  return <><Header eyebrow="Identity and access" title="User management" copy="Create teacher accounts and manage roles and access." action={<button className="primary" onClick={() => setCreating(true)}><UserPlus size={16} /> Create teacher</button>} />{error && <div className="error-message">{error}</div>}<section className="panel table-panel"><div className="table-tools"><label><Search size={16} /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search users" /></label><button className="outline"><Filter size={15} /> Filters</button></div>{loading ? <p>Loading users…</p> : <table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Last active</th><th /></tr></thead><tbody>{filtered.map((user) => <tr key={user.email}><td><strong>{user.name}</strong><small>{user.email}</small></td><td><span className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</span></td><td><span className={user.status === "Active" ? "status active" : "status suspended"}>{user.status}</span></td><td>—</td><td>—</td><td><button className="icon"><MoreHorizontal size={16} /></button></td></tr>)}</tbody></table>}</section>{creating && <CreateTeacherModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); loadUsers(); }} />}</>;
 }
 
 function CreateTeacherModal({ onClose, onCreated }: { onClose: () => void; onCreated: (teacher: UserRow) => void }) {
@@ -166,7 +173,7 @@ function CreateTeacherModal({ onClose, onCreated }: { onClose: () => void; onCre
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError(""); setLoading(true);
     try {
-      await apiRequest("/api/users", { method: "POST", body: JSON.stringify({ firstName, lastName, email, password, role: "Teacher" }) });
+      await apiRequest("/api/users", { method: "POST", body: JSON.stringify({ firstName, lastName, email, password }) });
       onCreated({ name: `${firstName} ${lastName}`.trim(), email, role: "Teacher", status: "Active" }); onClose();
     } catch (err) { setError(err instanceof Error ? err.message : "Could not create teacher."); } finally { setLoading(false); }
   };

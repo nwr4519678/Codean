@@ -33,4 +33,10 @@ public sealed class OutboxMessage
 
     /// <summary>Number of processing attempts made so far. Capped at 5.</summary>
     public int RetryCount { get; set; }
+
+    /// <summary>Short lease that prevents concurrent workers from processing the same message.</summary>
+    public DateTime? ClaimedUntil { get; set; }
+
+    /// <summary>Worker instance that currently owns the lease.</summary>
+    public string? ClaimedBy { get; set; }
 }

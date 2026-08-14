@@ -34,8 +34,11 @@ public sealed class JwtTokenService : ITokenIssuer
         var jti = Guid.NewGuid().ToString();
 
         // Active Signing Key Selection
-        var activeKeyOpt = _opt.SigningKeys.FirstOrDefault(k => k.IsActive) 
+        var activeKeyOpt = _opt.SigningKeys.FirstOrDefault(k => k.IsActive)
                            ?? new SigningKeyOptions { Secret = _opt.Secret, Kid = "default-kid", IsActive = true };
+
+        if (string.IsNullOrWhiteSpace(activeKeyOpt.Secret))
+            throw new InvalidOperationException("JWT signing key is not configured.");
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(activeKeyOpt.Secret));
         var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256)

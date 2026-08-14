@@ -22,6 +22,7 @@ internal sealed class OutboxProcessor(
 {
     private const int BatchSize = 20;
     private const int MaxRetries = 5;
+    private static readonly TimeSpan ClaimDuration = TimeSpan.FromMinutes(2);
 
     /// <summary>
     /// Processes up to <see cref="BatchSize"/> unprocessed outbox messages.
@@ -29,13 +30,23 @@ internal sealed class OutboxProcessor(
     /// </summary>
     public async Task ProcessAsync(CancellationToken ct = default)
     {
+        var now = DateTime.UtcNow;
+        var workerId = $"{Environment.MachineName}:{Environment.ProcessId}";
         var messages = await dbContext.Set<Persistence.Entities.OutboxMessage>()
-            .Where(m => m.ProcessedAt == null && m.RetryCount < MaxRetries)
+            .Where(m => m.ProcessedAt == null && m.RetryCount < MaxRetries &&
+                        (m.ClaimedUntil == null || m.ClaimedUntil < now))
             .OrderBy(m => m.OccurredAt)
             .Take(BatchSize)
             .ToListAsync(ct);
 
         if (messages.Count == 0) return;
+
+        foreach (var message in messages)
+        {
+            message.ClaimedBy = workerId;
+            message.ClaimedUntil = now.Add(ClaimDuration);
+        }
+        await dbContext.SaveChangesAsync(ct);
 
         logger.LogInformation("OutboxProcessor: processing {Count} message(s)", messages.Count);
 
@@ -46,6 +57,8 @@ internal sealed class OutboxProcessor(
                 await dispatcher.DispatchAsync(message.Type, message.Payload, ct);
                 message.ProcessedAt = DateTime.UtcNow;
                 message.Error       = null;
+                message.ClaimedBy = null;
+                message.ClaimedUntil = null;
 
                 logger.LogDebug("Outbox message processed: Id={Id}, Type={Type}", message.Id, message.Type);
             }
@@ -53,6 +66,8 @@ internal sealed class OutboxProcessor(
             {
                 message.RetryCount++;
                 message.Error = $"[Attempt {message.RetryCount}] {ex.Message}";
+                message.ClaimedBy = null;
+                message.ClaimedUntil = null;
 
                 logger.LogError(ex,
                     "Outbox message failed (attempt {Attempt}/{Max}): Id={Id}, Type={Type}",

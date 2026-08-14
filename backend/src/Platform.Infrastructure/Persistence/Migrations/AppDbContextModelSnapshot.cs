@@ -2324,6 +2324,15 @@ namespace Platform.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("error");
 
+                    b.Property<string>("ClaimedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("claimed_by");
+
+                    b.Property<DateTime?>("ClaimedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("claimed_until");
+
                     b.Property<DateTime>("OccurredAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_at");
@@ -2353,6 +2362,10 @@ namespace Platform.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ProcessedAt", "OccurredAt")
                         .HasDatabaseName("ix_outbox_messages_unprocessed")
+                        .HasFilter("processed_at IS NULL");
+
+                    b.HasIndex("ProcessedAt", "ClaimedUntil", "OccurredAt")
+                        .HasDatabaseName("ix_outbox_messages_claimable")
                         .HasFilter("processed_at IS NULL");
 
                     b.ToTable("outbox_messages", (string)null);

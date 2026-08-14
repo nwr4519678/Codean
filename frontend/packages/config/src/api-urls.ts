@@ -1,4 +1,5 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5294';
+const runtimeEnv = (globalThis as typeof globalThis & { __PLATFORM_ENV__?: Record<string, string | undefined> }).__PLATFORM_ENV__;
+export const API_BASE_URL = runtimeEnv?.VITE_API_URL || 'http://localhost:5294';
 
 export const API_URLS = {
   AUTH: {

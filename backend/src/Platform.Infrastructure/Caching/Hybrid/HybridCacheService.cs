@@ -30,8 +30,7 @@ public sealed class HybridCacheService : ICacheService
     {
         // HybridCache does not expose a raw Get — use GetOrCreateAsync with null factory
         // Return default if not found by using a sentinel
-        T? result = default;
-        await _cache.GetOrCreateAsync<T?>(
+        var result = await _cache.GetOrCreateAsync<T?>(
             key,
             _ => ValueTask.FromResult<T?>(default),
             new HybridCacheEntryOptions { Expiration = TimeSpan.Zero },

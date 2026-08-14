@@ -32,6 +32,7 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
+            ApiMetrics.RecordError();
             _logger.LogError(ex, "Unhandled exception occurred while processing request {Path}", context.Request.Path);
             await HandleExceptionAsync(context, ex);
         }

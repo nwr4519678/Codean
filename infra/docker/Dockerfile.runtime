@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage Dockerfile for any of: Platform.Api, Platform.Worker, Platform.Judge
+# Multi-stage Dockerfile for Platform.Api or Platform.Judge
 # Pass the desired project via --build-arg PROJECT=Platform.Api (default).
 ARG PROJECT=Platform.Api
 
@@ -7,12 +7,10 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG PROJECT
 WORKDIR /src
 COPY backend/global.json backend/Directory.Build.props backend/Directory.Packages.props ./
-COPY backend/src/Platform.Shared/         ./src/Platform.Shared/
 COPY backend/src/Platform.Domain/         ./src/Platform.Domain/
 COPY backend/src/Platform.Application/    ./src/Platform.Application/
 COPY backend/src/Platform.Infrastructure/ ./src/Platform.Infrastructure/
 COPY backend/src/Platform.Api/            ./src/Platform.Api/
-COPY backend/src/Platform.Worker/         ./src/Platform.Worker/
 COPY backend/src/Platform.Judge/          ./src/Platform.Judge/
 RUN dotnet restore src/${PROJECT}/${PROJECT}.csproj
 RUN dotnet publish src/${PROJECT}/${PROJECT}.csproj \
@@ -27,6 +25,7 @@ COPY infra/docker/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER platform
 ENV ASPNETCORE_URLS=http://+:8080 \
+    APP_DLL=${PROJECT}.dll \
     DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_GENERATE_ASPNET_CERTIFICATE=false
 EXPOSE 8080
