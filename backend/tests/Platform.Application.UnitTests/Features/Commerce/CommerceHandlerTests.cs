@@ -128,6 +128,7 @@ public class CommerceHandlerTests
     {
         private readonly IRepository<Payment> _payments = Substitute.For<IRepository<Payment>>();
         private readonly IRepository<StudentSubscription> _subs = Substitute.For<IRepository<StudentSubscription>>();
+        private readonly IRepository<SubscriptionPlan> _plans = Substitute.For<IRepository<SubscriptionPlan>>();
         private readonly IRepository<Invoice> _invoices = Substitute.For<IRepository<Invoice>>();
         private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
         private readonly IPaymobClient _paymob = Substitute.For<IPaymobClient>();
@@ -137,7 +138,7 @@ public class CommerceHandlerTests
         public ProcessPaymobWebhookHandlerTests()
         {
             _clock.UtcNow.Returns(new DateTimeOffset(2026, 8, 7, 12, 0, 0, TimeSpan.Zero));
-            _sut = new ProcessPaymobWebhookHandler(_payments, _subs, _invoices, _uow, _paymob, _clock);
+            _sut = new ProcessPaymobWebhookHandler(_payments, _subs, _plans, _invoices, _uow, _paymob, _clock);
         }
 
         [Fact]
@@ -158,11 +159,11 @@ public class CommerceHandlerTests
             _paymob.ValidateHmac(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
             _paymob.VerifyTransactionAsync("tx_1", Arg.Any<CancellationToken>()).Returns(true);
 
-            var existingPayment = new Payment { Id = 10L, TransactionId = "tx_1", Status = "Paid" };
+            var existingPayment = new Payment { Id = 10L, TransactionId = "tx_1", Status = "Paid", Currency = "EGP", Amount = 300 };
             _payments.FirstOrDefaultAsync(Arg.Any<Expression<Func<Payment, bool>>>(), Arg.Any<CancellationToken>())
                 .Returns(existingPayment);
 
-            var cmd = new ProcessPaymobWebhookCommand("raw", "valid_sig", "tx_1", true, "ord_1", "Card", 300, "EGP");
+            var cmd = new ProcessPaymobWebhookCommand("raw", "valid_sig", "tx_1", true, "tx_1", "Card", 300, "EGP");
             var result = await _sut.Handle(cmd, CancellationToken.None);
 
             result.IsSuccess.Should().BeTrue();
@@ -173,13 +174,14 @@ public class CommerceHandlerTests
         public async Task Handle_WhenFirstTimeSuccess_ShouldUpdatePaymentAndCreateInvoice()
         {
             _paymob.ValidateHmac(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
-            _paymob.VerifyTransactionAsync("tx_2", Arg.Any<CancellationToken>()).Returns(true);
+            _paymob.VerifyTransactionAsync("sub_plan_1_50_tx_2", Arg.Any<CancellationToken>()).Returns(true);
 
-            var pendingPayment = new Payment { Id = 15L, TransactionId = "tx_2", Amount = 300, Status = "Pending" };
+            var pendingPayment = new Payment { Id = 15L, TransactionId = "sub_plan_1_50_tx_2", Amount = 300, Currency = "EGP", Status = "Pending" };
             _payments.FirstOrDefaultAsync(Arg.Any<Expression<Func<Payment, bool>>>(), Arg.Any<CancellationToken>())
                 .Returns(pendingPayment);
 
-            var cmd = new ProcessPaymobWebhookCommand("raw", "sig", "tx_2", true, "ord_2", "Card", 300, "EGP");
+            _plans.GetByIdAsync(1L, Arg.Any<CancellationToken>()).Returns(new SubscriptionPlan { Id = 1, TeacherId = 7, DurationMonths = 1, Price = 300, IsActive = true });
+            var cmd = new ProcessPaymobWebhookCommand("raw", "sig", "sub_plan_1_50_tx_2", true, "sub_plan_1_50_tx_2", "Card", 300, "EGP");
             var result = await _sut.Handle(cmd, CancellationToken.None);
 
             result.IsSuccess.Should().BeTrue();

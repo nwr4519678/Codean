@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Bell,
@@ -34,6 +34,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { activity, assessments, courses, curriculum } from "./data";
+import { authApi, clearAuthTokens, getStoredAccessToken } from "@platform/api";
 import {
   AnnouncementsPage,
   AuthPage,
@@ -370,9 +371,21 @@ export default function App() {
       <Route path="/forbidden" element={<StatusPage status="forbidden" />} />
       <Route path="/maintenance" element={<StatusPage status="maintenance" />} />
       <Route path="/admin/*" element={<AdminRedirect />} />
-      <Route path="/*" element={<Shell />} />
+      <Route path="/*" element={<AuthenticatedShell />} />
     </Routes>
   );
+}
+
+function AuthenticatedShell() {
+  const [checking, setChecking] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
+  useEffect(() => {
+    if (!getStoredAccessToken()) { setChecking(false); return; }
+    authApi.getCurrentUser().then(() => setAuthenticated(true)).catch(() => clearAuthTokens()).finally(() => setChecking(false));
+  }, []);
+  if (checking) return <main className="status-page"><section><p className="eyebrow">CODEAN workspace</p><h1>Verifying your session…</h1></section></main>;
+  if (!authenticated) return <Navigate to="/auth/login" replace />;
+  return <Shell />;
 }
 
 function AdminRedirect() {

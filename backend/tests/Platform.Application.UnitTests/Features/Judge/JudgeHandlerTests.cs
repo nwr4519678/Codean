@@ -100,34 +100,34 @@ public class JudgeHandlerTests
         }
 
         [Fact]
-        public async Task Handle_WhenValid_ShouldEnqueueAndReturnQueuedStatus()
+        public async Task Handle_WhenValid_ShouldExecuteAndReturnCompletedStatus()
         {
             var testCases = JsonSerializer.Serialize(new[] { new { Input = "1", ExpectedOutput = "1" } });
             _challenges.GetByIdAsync(1L, Arg.Any<CancellationToken>())
                 .Returns(new CodingChallenge { Id = 1, TeacherId = 10L, Language = "python3", TestCases = testCases });
 
             _judgeService
-                .SubmitAsync(Arg.Any<CodeExecutionRequest>(), Arg.Any<CancellationToken>())
-                .Returns(new ExecutionSubmissionResponse(
-                    "exec_abc123", 0L, ExecutionStatus.Queued,
-                    new DateTime(2026, 8, 7, 12, 0, 0, DateTimeKind.Utc)));
+                .ExecuteAsync(Arg.Any<CodeExecutionRequest>(), Arg.Any<CancellationToken>())
+                .Returns(new CodeExecutionResult(
+                    "exec_abc123", 0L, ExecutionStatus.Completed, Verdict.Accepted,
+                    InfrastructureFailure.None, 1, 1, [], null, "1", null, 0, 1, 1, null));
 
             var result = await _sut.Handle(
                 new SubmitCodeChallengeCommand(1L, "print('hello')", "python3"),
                 CancellationToken.None);
 
             result.IsSuccess.Should().BeTrue();
-            result.Value!.Status.Should().Be("Queued");
+            result.Value!.Status.Should().Be("Completed");
             result.Value.ExecutionId.Should().Be("exec_abc123");
 
-            // Should call judge with correct request
-            await _judgeService.Received(1).SubmitAsync(
+            // Should call external compiler with correct request
+            await _judgeService.Received(1).ExecuteAsync(
                 Arg.Is<CodeExecutionRequest>(r =>
                     r.Language == "python3" &&
                     r.SourceCode == "print('hello')"),
                 Arg.Any<CancellationToken>());
 
-            // Should save twice — once for initial row, once for executionId update
+            // Should save twice — once for initial row, once for execution result
             await _uow.Received(2).SaveChangesAsync(Arg.Any<CancellationToken>());
         }
 
@@ -142,7 +142,7 @@ public class JudgeHandlerTests
 
             result.IsSuccess.Should().BeFalse();
             result.Error.Code.Should().Be("auth.unauthenticated");
-            await _judgeService.DidNotReceive().SubmitAsync(Arg.Any<CodeExecutionRequest>(), Arg.Any<CancellationToken>());
+            await _judgeService.DidNotReceive().ExecuteAsync(Arg.Any<CodeExecutionRequest>(), Arg.Any<CancellationToken>());
         }
     }
 
@@ -182,9 +182,7 @@ public class JudgeHandlerTests
             };
             _submissions.GetByIdAsync(1L, Arg.Any<CancellationToken>()).Returns(submission);
 
-            _judgeService
-                .GetResultAsync("exec_abc123", Arg.Any<CancellationToken>())
-                .Returns(new CodeExecutionResult(
+            submission.ExecutionResult = JsonSerializer.Serialize(new CodeExecutionResult(
                     "exec_abc123", 1L, ExecutionStatus.Completed,
                     Verdict.Accepted, InfrastructureFailure.None,
                     PassedTestCases: 5, TotalTestCases: 5,
@@ -203,11 +201,7 @@ public class JudgeHandlerTests
             result.Value!.Verdict.Should().Be("Accepted");
             result.Value.PassedTestCases.Should().Be(5);
 
-            // Score should be reconciled to 100%
-            submission.Score.Should().Be(100);
-            submission.Status.Should().Be("Completed");
-            _submissions.Received(1).Update(submission);
-            await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+            submission.Status.Should().Be("Queued");
         }
 
         [Fact]
@@ -221,9 +215,7 @@ public class JudgeHandlerTests
             };
             _submissions.GetByIdAsync(2L, Arg.Any<CancellationToken>()).Returns(submission);
 
-            _judgeService
-                .GetResultAsync("exec_running", Arg.Any<CancellationToken>())
-                .Returns(new CodeExecutionResult(
+            submission.ExecutionResult = JsonSerializer.Serialize(new CodeExecutionResult(
                     "exec_running", 2L, ExecutionStatus.Running,
                     null, InfrastructureFailure.None,
                     0, 0, [], null, null, null, null, 0, 0, null));

@@ -1,0 +1,53 @@
+name: deploy-api-to-monsterasp
+
+on:
+  push:
+    branches: [main, feature/platform-v2]
+    paths:
+      - backend/**
+      - .github/workflows/monsterasp-deploy.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy Platform.Api
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore backend/Platform.slnx --runtime win-x86
+
+      - name: Build
+        run: dotnet build backend/Platform.slnx --configuration Release --no-restore --maxcpucount:1
+
+      - name: Test application layer
+        run: dotnet test backend/Platform.slnx --configuration Release --no-restore --maxcpucount:1
+
+      - name: Publish for IIS
+        run: dotnet publish backend/src/Platform.Api/Platform.Api.csproj --configuration Release --no-restore --output ./publish --runtime win-x86 --self-contained false
+
+      - name: Deploy to MonsterASP via Web Deploy
+        uses: rasmusbuchholdt/simply-web-deploy@2.2.0
+        with:
+          website-name: ${{ secrets.MONSTERASP_WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.MONSTERASP_SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.MONSTERASP_SERVER_USERNAME }}
+          server-password: ${{ secrets.MONSTERASP_SERVER_PASSWORD }}
+          source-path: '\publish\'
+          target-delete: true

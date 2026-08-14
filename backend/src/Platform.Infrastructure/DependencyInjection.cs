@@ -61,7 +61,6 @@ public static class DependencyInjection
         // Jobs (implementations only — scheduling registration is in Platform.Api)
         services.AddScoped<ProcessOutboxJob>();
         services.AddScoped<TokenCleanupJob>();
-        services.AddScoped<ProcessJudgeResultsJob>();
 
         // ── Authentication & Security ─────────────────────────────────────────
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
@@ -99,12 +98,15 @@ public static class DependencyInjection
         services.Configure<PaymobOptions>(configuration.GetSection("Paymob"));
 
         // ── Judge Service ─────────────────────────────────────────────────────
-        services.AddHttpClient<Platform.Application.Common.Contracts.Judge.IJudgeService, JudgeHttpClient>(
+        services.Configure<JudgeOptions>(configuration.GetSection(JudgeOptions.SectionName));
+        services.AddHttpClient<Platform.Application.Common.Contracts.Judge.IJudgeService, OnlineCompilerClient>(
             (sp, client) =>
             {
                 var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JudgeOptions>>().Value;
                 client.BaseAddress = new System.Uri(opts.BaseUrl);
                 client.Timeout     = System.TimeSpan.FromSeconds(opts.TimeoutSeconds);
+                if (!string.IsNullOrWhiteSpace(opts.ApiKey))
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", opts.ApiKey);
             });
 
         // ── Health Check Implementations ──────────────────────────────────────

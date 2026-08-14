@@ -7,6 +7,7 @@ public static class MiddlewareExtensions
     public static IApplicationBuilder UsePlatformMiddlewares(this IApplicationBuilder app)
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<CorrelationMiddleware>();
         app.UseMiddleware<SecurityHeadersMiddleware>();
 
         return app;

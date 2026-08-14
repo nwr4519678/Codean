@@ -21,7 +21,7 @@ export const useTrackProgress = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: coursesApi.trackProgress,
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: coursesQueryKeys.all });
     },
   });

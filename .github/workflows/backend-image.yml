@@ -67,21 +67,6 @@ jobs:
           provenance: true
           sbom: true
 
-      - name: Build and push Platform.Judge
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: infra/docker/Dockerfile.runtime
-          build-args: PROJECT=Platform.Judge
-          push: true
-          tags: |
-            ${{ env.ECR_REGISTRY }}/platform/judge:${{ steps.meta.outputs.sha }}
-            ${{ env.ECR_REGISTRY }}/platform/judge:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: true
-          sbom: true
-
   update-manifests:
     name: update-helm-values
     runs-on: ubuntu-latest
@@ -95,7 +80,6 @@ jobs:
           SHORT_SHA="${GITHUB_SHA::12}"
           yq -i ".api.image.tag = \"$SHORT_SHA\"" infra/helm/platform/values-prod.yaml
           yq -i ".worker.image.tag = \"$SHORT_SHA\"" infra/helm/platform/values-prod.yaml
-          yq -i ".judge.image.tag = \"$SHORT_SHA\"" infra/helm/platform/values-prod.yaml
 
       - name: Open PR (ArgoCD will sync on merge to main)
         uses: peter-evans/create-pull-request@v6

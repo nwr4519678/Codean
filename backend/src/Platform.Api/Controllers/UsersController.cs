@@ -102,7 +102,7 @@ public sealed class UsersController : ApiController
             FullName: $"{request.FirstName.Trim()} {request.LastName.Trim()}".Trim(),
             Email:    request.Email,
             Password: request.Password,
-            Role:     request.Role);
+            Role:     "Teacher");
 
         var result = await _sender.Send(cmd, ct);
         return result.IsSuccess
@@ -119,5 +119,4 @@ public sealed record AdminCreateUserRequest(
     string FirstName,
     string LastName,
     string Email,
-    string Password,
-    string Role = "Teacher");
+    string Password);

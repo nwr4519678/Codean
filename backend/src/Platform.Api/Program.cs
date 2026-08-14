@@ -31,7 +31,7 @@ try
 
     app.UseHttpsRedirection();
     app.UseRateLimiter();
-    app.UseCors("AllowAll");
+    app.UseCors("PlatformCors");
     app.UseAuthentication();
     app.UseAuthorization();
 
@@ -47,8 +47,11 @@ try
         var seeder = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         var hasher = scope.ServiceProvider.GetService<Platform.Application.Common.Contracts.Authentication.IPasswordHasher>();
 
-        // Apply any pending EF migrations automatically
-        await db.Database.MigrateAsync();
+        // Startup migration is opt-in for hosted environments. Free Render web
+        // services do not support paid pre-deploy commands, so the API performs
+        // the migration once during startup when explicitly enabled.
+        if (builder.Configuration.GetValue("RunMigrationsOnStartup", app.Environment.IsDevelopment()))
+            await db.Database.MigrateAsync();
 
         // Seed core reference data (Roles etc.) & dev admin account in development mode only
         await Platform.Infrastructure.Persistence.DatabaseSeeder.SeedAsync(db, seeder, app.Environment.IsDevelopment(), hasher);

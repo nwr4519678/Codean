@@ -39,7 +39,7 @@ export const modulesApi = {
     duration?: number;
     order: number;
   }): Promise<unknown> => {
-    const res = await apiClient.post(API_URLS.COURSES.LESSONS(payload.moduleId), payload);
+    const res = await apiClient.post('/api/lessons', payload);
     return res.data;
   },
 
@@ -52,7 +52,7 @@ export const modulesApi = {
   },
 
   publishLesson: async (id: number | string): Promise<void> => {
-    await apiClient.post(`/api/lessons/${id}/publish`);
+    await apiClient.post(`/api/lessons/${id}/publish`, { isPublished: true });
   },
 
   deleteLesson: async (id: number | string): Promise<void> => {

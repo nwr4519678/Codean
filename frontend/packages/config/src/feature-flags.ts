@@ -7,11 +7,13 @@ export interface FeatureFlags {
   analyticsEnabled: boolean;
 }
 
+const runtimeEnv = (globalThis as typeof globalThis & { __PLATFORM_ENV__?: Record<string, string | undefined> }).__PLATFORM_ENV__;
+
 export const FEATURE_FLAGS: FeatureFlags = {
-  judgeEnabled: process.env.NEXT_PUBLIC_FLAG_JUDGE !== 'false',
-  paymentsEnabled: process.env.NEXT_PUBLIC_FLAG_PAYMENTS !== 'false',
-  certificatesEnabled: process.env.NEXT_PUBLIC_FLAG_CERTS === 'true',
-  liveSessionsEnabled: process.env.NEXT_PUBLIC_FLAG_LIVE !== 'false',
-  pwaEnabled: process.env.NEXT_PUBLIC_FLAG_PWA !== 'false',
-  analyticsEnabled: process.env.NEXT_PUBLIC_FLAG_ANALYTICS !== 'false',
+  judgeEnabled: runtimeEnv?.VITE_FLAG_JUDGE !== 'false',
+  paymentsEnabled: runtimeEnv?.VITE_FLAG_PAYMENTS !== 'false',
+  certificatesEnabled: runtimeEnv?.VITE_FLAG_CERTS === 'true',
+  liveSessionsEnabled: runtimeEnv?.VITE_FLAG_LIVE !== 'false',
+  pwaEnabled: runtimeEnv?.VITE_FLAG_PWA !== 'false',
+  analyticsEnabled: runtimeEnv?.VITE_FLAG_ANALYTICS !== 'false',
 };

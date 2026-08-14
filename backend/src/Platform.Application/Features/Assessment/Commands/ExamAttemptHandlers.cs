@@ -125,13 +125,24 @@ public sealed class SubmitExamAttemptHandler : IRequestHandler<SubmitExamAttempt
 public sealed class GetExamAttemptByIdHandler : IRequestHandler<GetExamAttemptByIdQuery, Result<ExamAttemptResponse>>
 {
     private readonly IRepository<ExamAttempt> _attempts;
-    public GetExamAttemptByIdHandler(IRepository<ExamAttempt> attempts) => _attempts = attempts;
+    private readonly ICurrentUser _currentUser;
+    public GetExamAttemptByIdHandler(IRepository<ExamAttempt> attempts, ICurrentUser currentUser)
+    {
+        _attempts = attempts;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<ExamAttemptResponse>> Handle(GetExamAttemptByIdQuery request, CancellationToken ct)
     {
         var attempt = await _attempts.GetByIdAsync(request.AttemptId, ct);
         if (attempt is null)
             return Result<ExamAttemptResponse>.Failure(Error.NotFound("attempts.not_found", $"Attempt {request.AttemptId} not found."));
+
+        if (!_currentUser.UserId.HasValue)
+            return Result<ExamAttemptResponse>.Failure(Error.Unauthorized("auth.unauthenticated", "You must be logged in."));
+
+        if (attempt.StudentId != _currentUser.UserId.Value && !_currentUser.IsInRole("Admin"))
+            return Result<ExamAttemptResponse>.Failure(Error.Forbidden("auth.forbidden", "You do not own this attempt."));
 
         return Result<ExamAttemptResponse>.Success(attempt.ToResponse());
     }

@@ -103,17 +103,11 @@ public record CodeExecutionResult(
 );
 
 /// <summary>
-/// Outbound port for the code-execution Judge service.
-/// Implemented by Platform.Infrastructure via HTTP (JudgeHttpClient).
+/// Outbound port for the external code-execution provider.
+/// The API is intentionally a thin adapter; no local execution is performed.
 /// </summary>
 public interface IJudgeService
 {
-    /// <summary>Submits a code execution request. ExecutionId is the idempotency key.</summary>
-    Task<ExecutionSubmissionResponse> SubmitAsync(CodeExecutionRequest request, CancellationToken cancellationToken = default);
-
-    /// <summary>Checks the operational status of a submitted execution.</summary>
-    Task<ExecutionStatusResponse?> GetStatusAsync(string executionId, CancellationToken cancellationToken = default);
-
-    /// <summary>Retrieves the final result of a completed execution.</summary>
-    Task<CodeExecutionResult?> GetResultAsync(string executionId, CancellationToken cancellationToken = default);
+    /// <summary>Executes code through the configured external compiler API.</summary>
+    Task<CodeExecutionResult> ExecuteAsync(CodeExecutionRequest request, CancellationToken cancellationToken = default);
 }

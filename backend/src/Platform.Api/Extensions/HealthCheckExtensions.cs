@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Platform.Api.Middleware;
 
 namespace Platform.Api.Extensions;
 
@@ -46,6 +47,8 @@ public static class HealthCheckExtensions
             ResponseWriter = WriteJsonReport
         });
 
+        app.MapGet("/metrics", () => Results.Text(ApiMetrics.Snapshot(), "text/plain; version=0.0.4"));
+
         return app;
     }
 
@@ -66,7 +69,7 @@ public static class HealthCheckExtensions
                     status      = e.Value.Status.ToString(),
                     description = e.Value.Description,
                     duration    = e.Value.Duration.TotalMilliseconds,
-                    error       = e.Value.Exception?.Message
+                    error       = e.Value.Status == HealthStatus.Unhealthy ? "unhealthy" : null
                 })
         }, JsonOpts);
 

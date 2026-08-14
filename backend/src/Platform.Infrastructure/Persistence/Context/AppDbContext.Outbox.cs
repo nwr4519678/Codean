@@ -30,9 +30,11 @@ public partial class AppDbContext
             entity.Property(e => e.ProcessedAt).HasColumnName("processed_at");
             entity.Property(e => e.Error).HasColumnName("error").HasMaxLength(2000);
             entity.Property(e => e.RetryCount).HasColumnName("retry_count").HasDefaultValue(0);
+            entity.Property(e => e.ClaimedUntil).HasColumnName("claimed_until");
+            entity.Property(e => e.ClaimedBy).HasColumnName("claimed_by").HasMaxLength(200);
 
             // Index for fast polling: unprocessed messages ordered by OccurredAt
-            entity.HasIndex(e => new { e.ProcessedAt, e.OccurredAt })
+            entity.HasIndex(e => new { e.ProcessedAt, e.ClaimedUntil, e.OccurredAt })
                   .HasFilter("processed_at IS NULL")
                   .HasDatabaseName("ix_outbox_messages_unprocessed");
         });

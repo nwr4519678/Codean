@@ -6,7 +6,7 @@ namespace Platform.Infrastructure.Configuration;
 public sealed class SigningKeyOptions
 {
     public string Kid { get; set; } = "default-key-id";
-    public string Secret { get; set; } = "PlatformDefaultSuperSecretKey1234567890!";
+    public string Secret { get; set; } = "";
     public bool IsActive { get; set; } = true;
 }
 
@@ -16,7 +16,7 @@ public sealed class JwtOptions
 
     public string Issuer { get; set; } = "platform";
     public string Audience { get; set; } = "platform";
-    public string Secret { get; set; } = "PlatformDefaultSuperSecretKey1234567890!";
+    public string Secret { get; set; } = "";
     public List<SigningKeyOptions> SigningKeys { get; set; } = new();
     public int AccessTokenLifetimeMinutes { get; set; } = 15;
     public int RefreshTokenLifetimeDays { get; set; } = 30;

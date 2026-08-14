@@ -1,8 +1,6 @@
-version: "3.9"
-
 # Local development stack for the Platform monorepo.
 # Brings up: Postgres, Redis, OpenSearch, MinIO (R2 substitute), MailHog,
-# API, Worker, Judge, and the Web app.
+# API, Judge, and the Web app.
 #
 # Usage:
 #   docker compose -f infra/docker-compose/docker-compose.yml up -d
@@ -12,7 +10,9 @@ version: "3.9"
 x-platform-base: &platform-base
   platform: linux/amd64
   restart: unless-stopped
-  env_file: .env.local
+  env_file:
+    - path: .env.local
+      required: false
 
 services:
   postgres:
@@ -117,32 +117,8 @@ services:
       Smtp__FromAddress: no-reply@platform.local
       Jwt__Issuer: platform
       Jwt__Audience: platform
-      Jwt__PrivateKeyPem: |
-        -----BEGIN RSA PRIVATE KEY-----
-        MIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8Qu
-        KUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAwEAAQ==
-        -----END RSA PRIVATE KEY-----
-      Jwt__PublicKeyPem: |
-        -----BEGIN PUBLIC KEY-----
-        MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf
-        9Cnzj4p4WGeKLs1Pt8QuKUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAw==
-        -----END PUBLIC KEY-----
+      Jwt__Secret: local-development-only-change-me
     ports: ["8080:8080"]
-
-  worker:
-    <<: *platform-base
-    build:
-      context: ../..
-      dockerfile: infra/docker/Dockerfile.runtime
-      args: { PROJECT: Platform.Worker }
-    container_name: platform-worker
-    depends_on:
-      postgres:    { condition: service_healthy }
-      redis:       { condition: service_healthy }
-    environment:
-      ConnectionStrings__Postgres: Host=postgres;Database=platform;Username=platform;Password=platform
-      Redis__Configuration: redis:6379
-      ASPNETCORE_ENVIRONMENT: Development
 
   judge:
     <<: *platform-base
@@ -163,11 +139,11 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.web
+      args:
+        VITE_API_URL: http://localhost:8080
     container_name: platform-web
     depends_on: [api]
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
-    ports: ["3000:3000"]
+    ports: ["3000:80"]
 
 volumes:
   pgdata:

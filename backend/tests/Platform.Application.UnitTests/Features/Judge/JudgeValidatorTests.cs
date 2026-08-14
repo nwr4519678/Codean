@@ -36,7 +36,8 @@ public class JudgeValidatorTests
         [Theory]
         [InlineData("python")]
         [InlineData("csharp")]
-        [InlineData("rust")]
+        [InlineData("javascript")]
+        [InlineData("html")]
         public void Should_NotHaveError_When_LanguageValid(string lang)
             => _validator.TestValidate(
                     new CreateCodingChallengeCommand("Title", "Desc", lang, "pass", "[{}]", "Hard", 100))

@@ -33,9 +33,10 @@ public static class DependencyInjection
         // ── CORS ────────────────────────────────────────────────────────────
         services.AddCors(options =>
         {
-            options.AddPolicy("AllowAll", policy =>
+            options.AddPolicy("PlatformCors", policy =>
             {
-                policy.AllowAnyOrigin()
+                var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+                policy.WithOrigins(origins)
                       .AllowAnyHeader()
                       .AllowAnyMethod();
             });
@@ -51,12 +52,20 @@ public static class DependencyInjection
         services.Configure<EmailVerificationOptions>(configuration.GetSection(EmailVerificationOptions.SectionName));
         services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
 
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .Validate(o => configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development" ||
+                          (!string.IsNullOrWhiteSpace(o.Secret) || o.SigningKeys.Any(k => !string.IsNullOrWhiteSpace(k.Secret))),
+                "A production JWT signing secret or signing key is required.")
+            .ValidateOnStart();
+
         // ── JWT Authentication ───────────────────────────────────────────────
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
                          ?? new JwtOptions();
 
         // Build signing keys from config (supports multi-key rotation)
         var signingKeys = jwtOptions.SigningKeys
+            .Where(k => !string.IsNullOrWhiteSpace(k.Secret))
             .Select(k => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(k.Secret)))
             .Cast<SecurityKey>()
             .ToList();

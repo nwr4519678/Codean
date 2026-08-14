@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: platform-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infra/docker/Dockerfile.runtime
+    dockerContext: .
+    healthCheckPath: /health/live
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: RunMigrationsOnStartup
+        value: "true"
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Jwt__Secret
+        sync: false
+      - key: Jwt__SigningKeySecret
+        sync: false
+      - key: Cors__AllowedOrigins
+        sync: false
+      - key: Judge__ApiKey
+        sync: false
+      - key: Judge__BaseUrl
+        value: https://api.onlinecompiler.io/

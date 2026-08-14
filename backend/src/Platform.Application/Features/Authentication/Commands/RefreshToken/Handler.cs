@@ -144,6 +144,7 @@ public sealed class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, R
                 Permissions.HomeworksManage,
                 Permissions.ChallengesManage,
                 Permissions.AnnouncementsManage
+                ,Permissions.LiveSessionsManage
             ]);
         }
 

@@ -31,25 +31,28 @@ export interface CurrentUserResponse {
 }
 
 export interface LoginResponse {
+  userId: number;
+  email: string;
+  fullName: string;
+  role: string;
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
-  user: CurrentUserResponse;
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
 }
 
 export interface RegisterResponse {
-  id: number;
+  userId: number;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  requiresEmailVerification: boolean;
+  fullName: string;
+  emailVerificationRequired: boolean;
 }
 
 export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
-  expiresIn: number;
+  accessTokenExpiresAt: string;
+  refreshTokenExpiresAt: string;
 }
 
 export interface SetupTwoFactorResponse {

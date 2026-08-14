@@ -74,4 +74,5 @@ desktop.ini
 *.temp
 *.bak
 *.swp
+backend/publish-validation/
 "@ | Add-Content .gitignore
