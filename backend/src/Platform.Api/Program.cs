@@ -47,10 +47,10 @@ try
         var seeder = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         var hasher = scope.ServiceProvider.GetService<Platform.Application.Common.Contracts.Authentication.IPasswordHasher>();
 
-        // Production migrations are executed by the explicit Render release command.
-        // Startup migration is opt-in for local development only.
-        if (app.Environment.IsDevelopment() &&
-            builder.Configuration.GetValue("RunMigrationsOnStartup", true))
+        // Startup migration is opt-in for hosted environments. Free Render web
+        // services do not support paid pre-deploy commands, so the API performs
+        // the migration once during startup when explicitly enabled.
+        if (builder.Configuration.GetValue("RunMigrationsOnStartup", app.Environment.IsDevelopment()))
             await db.Database.MigrateAsync();
 
         // Seed core reference data (Roles etc.) & dev admin account in development mode only

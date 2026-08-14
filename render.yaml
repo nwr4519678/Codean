@@ -2,6 +2,7 @@ services:
   - type: web
     name: platform-api
     runtime: docker
+    plan: free
     dockerfilePath: ./infra/docker/Dockerfile.runtime
     dockerContext: .
     healthCheckPath: /health/live
@@ -10,6 +11,8 @@ services:
         value: Production
       - key: ASPNETCORE_URLS
         value: http://+:8080
+      - key: RunMigrationsOnStartup
+        value: "true"
       - key: ConnectionStrings__DefaultConnection
         sync: false
       - key: Redis__Configuration
@@ -20,18 +23,3 @@ services:
         sync: false
       - key: Cors__AllowedOrigins
         sync: false
-
-  - type: worker
-    name: platform-judge
-    runtime: docker
-    dockerfilePath: ./infra/docker/Dockerfile.runtime
-    dockerContext: .
-    envVars:
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
-      - key: ConnectionStrings__DefaultConnection
-        sync: false
-      - key: Redis__Configuration
-        sync: false
-      - key: APP_DLL
-        value: Platform.Judge.dll
