@@ -11,14 +11,14 @@ namespace Platform.Infrastructure.Persistence;
 
 /// <summary>
 /// Seeds essential reference data (Roles) into the database on application startup.
-    /// The development admin is seeded only when explicitly enabled by the host.
+/// Default development admin user is ONLY seeded when running in Development environment.
 /// </summary>
 public static class DatabaseSeeder
 {
     public static async Task SeedAsync(
         AppDbContext db,
         ILogger logger,
-        bool seedDevelopmentAdmin = false,
+        bool isDevelopment = false,
         IPasswordHasher? passwordHasher = null)
     {
         var existingRoles = await db.Roles.ToListAsync();
@@ -51,7 +51,7 @@ public static class DatabaseSeeder
         }
 
         // ── Seed Development Admin Account (Development Environment ONLY) ────────
-        if (seedDevelopmentAdmin)
+        if (isDevelopment)
         {
             var adminEmail = "admin@platform.com";
             var adminRole = await db.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
@@ -102,7 +102,7 @@ public static class DatabaseSeeder
         }
         else
         {
-            logger.LogInformation("Development admin account seeding is disabled.");
+            logger.LogInformation("Production environment detected: Skipping development admin account seeding.");
         }
     }
 }

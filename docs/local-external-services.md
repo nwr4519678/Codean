@@ -16,7 +16,6 @@ dotnet user-secrets set 'ConnectionStrings:DefaultConnection' $supabaseConnectio
 dotnet user-secrets set 'ConnectionStrings:Hangfire' $supabaseConnection --project src/Platform.Api
 dotnet user-secrets set 'Clerk:Authority' 'https://<your-clerk-instance>.clerk.accounts.dev' --project src/Platform.Api
 dotnet user-secrets set 'RunMigrationsOnStartup' 'true' --project src/Platform.Api
-dotnet user-secrets set 'SeedDevelopmentAdmin' 'false' --project src/Platform.Api
 ```
 
 `DefaultConnection` is the application database. `Hangfire` may use the same
@@ -30,8 +29,7 @@ dotnet run --project src/Platform.Api --launch-profile http
 ```
 
 The API applies pending migrations and seeds reference roles on startup. This
-does not reset or delete existing Supabase data. Development admin seeding is
-disabled for this external-database workflow.
+does not reset or delete existing Supabase data.
 
 ## Local frontend
 
