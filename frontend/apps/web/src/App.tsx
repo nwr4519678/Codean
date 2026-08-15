@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import {
   ArrowRight,
   Bell,
@@ -34,7 +35,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { activity, assessments, courses, curriculum } from "./data";
-import { authApi, clearAuthTokens, getStoredAccessToken } from "@platform/api";
+import { authApi, clearAuthTokens } from "@platform/api";
 import {
   AnnouncementsPage,
   AuthPage,
@@ -377,12 +378,14 @@ export default function App() {
 }
 
 function AuthenticatedShell() {
+  const { isLoaded, isSignedIn } = useClerkAuth();
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   useEffect(() => {
-    if (!getStoredAccessToken()) { setChecking(false); return; }
+    if (!isLoaded) return;
+    if (!isSignedIn) { setAuthenticated(false); setChecking(false); return; }
     authApi.getCurrentUser().then(() => setAuthenticated(true)).catch(() => clearAuthTokens()).finally(() => setChecking(false));
-  }, []);
+  }, [isLoaded, isSignedIn]);
   if (checking) return <main className="status-page"><section><p className="eyebrow">CODEAN workspace</p><h1>Verifying your session…</h1></section></main>;
   if (!authenticated) return <Navigate to="/auth/login" replace />;
   return <Shell />;

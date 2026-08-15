@@ -3,6 +3,7 @@ export * from './client';
 export * from './auth/api';
 export * from './auth/hooks';
 export * from './auth/keys';
+export * from './auth/supabase';
 
 export * from './courses/api';
 export * from './courses/hooks';

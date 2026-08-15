@@ -1,7 +1,7 @@
 import { FormEvent, createContext, useContext, useEffect, useState } from "react";
+import { SignIn, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import {
   Activity,
-  ArrowRight,
   BarChart3,
   Bell,
   BookOpen,
@@ -14,7 +14,6 @@ import {
   Filter,
   GraduationCap,
   LayoutDashboard,
-  LockKeyhole,
   LogOut,
   Menu,
   MoreHorizontal,
@@ -28,21 +27,19 @@ import {
   WalletCards,
   X,
 } from "lucide-react";
-import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { getCurrentAuthToken } from "@platform/api";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5294";
 const PUBLIC_APP_URL = import.meta.env.VITE_PUBLIC_APP_URL ?? "http://localhost:5173";
-const ACCESS_TOKEN_KEY = "codean_admin_access_token";
-const REFRESH_TOKEN_KEY = "codean_admin_refresh_token";
 
 type AdminUser = { userId: number; email: string; fullName: string; role: string };
-type LoginResponse = AdminUser & { accessToken: string; refreshToken: string; accessTokenExpiresAt: string; refreshTokenExpiresAt: string };
 type AuthState = { user: AdminUser | null; checking: boolean; login: (email: string, password: string) => Promise<void>; logout: () => void };
 
 const AuthContext = createContext<AuthState | null>(null);
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  const token = await getCurrentAuthToken();
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init?.headers },
@@ -56,35 +53,29 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { isLoaded, isSignedIn, signOut } = useClerkAuth();
   const [user, setUser] = useState<AdminUser | null>(null);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-    if (!token) { setChecking(false); return; }
+    if (!isLoaded) return;
+    if (!isSignedIn) { setUser(null); setChecking(false); return; }
     apiRequest<AdminUser & { emailConfirmed: boolean; createdAt: string }>("/api/auth/me")
       .then((current) => {
         if (current.role.toLowerCase() !== "admin") throw new Error("Admin access required.");
         setUser(current);
       })
       .catch(() => {
-        localStorage.removeItem(ACCESS_TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        void signOut();
+        setUser(null);
       })
       .finally(() => setChecking(false));
-  }, []);
+  }, [isLoaded, isSignedIn, signOut]);
 
-  const login = async (email: string, password: string) => {
-    const result = await apiRequest<LoginResponse>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password, rememberMe: true }) });
-    if (result.role.toLowerCase() !== "admin") throw new Error("This console is restricted to platform administrators.");
-    localStorage.setItem(ACCESS_TOKEN_KEY, result.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, result.refreshToken);
-    setUser({ userId: result.userId, email: result.email, fullName: result.fullName, role: result.role });
-  };
+  const login = async () => undefined;
 
   const logout = () => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    void signOut();
     setUser(null);
   };
 
@@ -106,18 +97,9 @@ function Protected({ children }: { children: React.ReactNode }) {
 }
 
 function LoginPage() {
-  const { user, login } = useAuth();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
   if (user) return <Navigate to="/" replace />;
-  const submit = async (event: FormEvent) => {
-    event.preventDefault(); setError(""); setLoading(true);
-    try { await login(email, password); navigate("/"); } catch (err) { setError(err instanceof Error ? err.message : "Unable to sign in."); } finally { setLoading(false); }
-  };
-  return <main className="login-page"><section className="login-brand"><a href={PUBLIC_APP_URL} className="brand"><span><Code2 size={21} /></span>CODEAN</a><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><form onSubmit={submit}><span className="lock-mark"><LockKeyhole size={22} /></span><p className="kicker">Administrator access</p><h2>Sign in to the console</h2><p>Use an account with the Admin role.</p>{error && <div className="error-message">{error}</div>}<label><span>Email address</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="admin@platform.com" /></label><label><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••••••" /></label><button disabled={loading}>{loading ? "Verifying..." : "Sign in securely"}<ArrowRight size={17} /></button></form></section></main>;
+  return <main className="login-page"><section className="login-brand"><a href={PUBLIC_APP_URL} className="brand"><span><Code2 size={21} /></span>CODEAN</a><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><SignIn routing="hash" afterSignInUrl="/" appearance={{ elements: { rootBox: "clerk-root", card: "clerk-card" } }} /></section></main>;
 }
 
 const navItems = [

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Authorization;
+using Platform.Api.Authentication;
 using Platform.Application.Common.Pagination;
 using Platform.Application.Features.Authentication.Dtos;
 using Platform.Application.Features.Users.Dtos;
@@ -21,7 +22,8 @@ namespace Platform.Api.Controllers;
 public sealed class UsersController : ApiController
 {
     private readonly ISender _sender;
-    public UsersController(ISender sender) => _sender = sender;
+    private readonly SupabaseAdminClient _supabaseAdmin;
+    public UsersController(ISender sender, SupabaseAdminClient supabaseAdmin) { _sender = sender; _supabaseAdmin = supabaseAdmin; }
 
     /// <summary>Returns a paged list of users with search and filter parameters.</summary>
     [HttpGet]
@@ -98,8 +100,18 @@ public sealed class UsersController : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<IActionResult> CreateUser([FromBody] AdminCreateUserRequest request, CancellationToken ct)
     {
+        var fullName = $"{request.FirstName.Trim()} {request.LastName.Trim()}".Trim();
+        try
+        {
+            await _supabaseAdmin.CreateUserAsync(request.Email.Trim().ToLowerInvariant(), request.Password, fullName, ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new ProblemDetails { Status = 503, Title = "Identity provider unavailable", Detail = ex.Message });
+        }
+
         var cmd = new RegisterCommand(
-            FullName: $"{request.FirstName.Trim()} {request.LastName.Trim()}".Trim(),
+            FullName: fullName,
             Email:    request.Email,
             Password: request.Password,
             Role:     "Teacher");

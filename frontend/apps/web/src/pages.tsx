@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { SignIn, SignUp } from "@clerk/clerk-react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -111,45 +112,8 @@ export function PricingPage() {
 
 export function AuthPage() {
   const { mode = "login" } = useParams();
-  const navigate = useNavigate();
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setBusy(true);
-    const form = new FormData(event.currentTarget);
-    try {
-      if (mode === "login") {
-        const result = await authApi.login(String(form.get("email")), String(form.get("password")));
-        navigate(result.role === "Teacher" ? "/teacher/dashboard" : "/dashboard", { replace: true });
-      } else if (mode === "register") {
-        const fullName = String(form.get("fullName") ?? "").trim().split(/\s+/);
-        await authApi.register({ firstName: fullName[0] ?? "Student", lastName: fullName.slice(1).join(" ") || "User", email: String(form.get("email")), password: String(form.get("password")), role: "Student" });
-        navigate("/auth/login", { replace: true });
-      } else if (mode === "forgot-password") {
-        await authApi.forgotPassword(String(form.get("email")));
-        setSubmitted(true);
-      } else if (mode === "reset-password") {
-        await authApi.resetPassword(new URLSearchParams(window.location.search).get("token") ?? "", String(form.get("password")));
-        setSubmitted(true);
-      } else if (mode === "verify-email") {
-        await authApi.verifyEmail(new URLSearchParams(window.location.search).get("token") ?? "");
-        setSubmitted(true);
-      } else {
-        setSubmitted(true);
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to complete the request. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  };
-  const titles: Record<string, [string, string]> = { login: ["Welcome back", "Continue your learning workspace."], register: ["Create your account", "Start with a focused learning plan."], "forgot-password": ["Reset your password", "We will send a secure reset link."], "reset-password": ["Choose a new password", "Use at least eight characters."], "verify-email": ["Verify your email", "Enter the code sent to your inbox."], "2fa": ["Two-factor verification", "Enter the six-digit authenticator code."] };
-  const [title, copy] = titles[mode] ?? titles.login;
-  if (submitted) return <StatusPage status={mode === "forgot-password" ? "email" : "verified"} />;
-  return <div className="auth-page"><aside><Link to="/" className="brand"><span className="brand-mark"><Code2 size={20} /></span>CODEAN</Link><div><p className="eyebrow">Focused learning</p><h2>Small steps. Real projects. Visible progress.</h2><p>Join a workspace built around doing the work, reviewing feedback, and improving deliberately.</p></div><span>Trusted by 18,000+ learners</span></aside><main><div className="auth-card"><Link className="back-link" to="/"><ArrowLeft size={15} /> Back to CODEAN</Link><p className="eyebrow">Account access</p><h1>{title}</h1><p>{copy}</p>{error && <p role="alert" className="form-error">{error}</p>}<form onSubmit={submit}>{mode === "register" && <Field label="Full name"><input name="fullName" required placeholder="Nadia Hassan" /></Field>}{!["2fa", "verify-email"].includes(mode) && <Field label="Email address"><input name="email" required type="email" placeholder="name@example.com" /></Field>}{["login", "register"].includes(mode) && <Field label="Password"><input name="password" required type="password" placeholder="••••••••••••" /></Field>}{mode === "reset-password" && <><Field label="New password"><input name="password" required type="password" /></Field><Field label="Confirm password"><input required type="password" /></Field></>}{["2fa", "verify-email"].includes(mode) && <Field label="Verification code"><input name="code" className="code-input" required inputMode="numeric" maxLength={6} placeholder="000000" /></Field>}<button disabled={busy} className="button button-primary auth-submit">{busy ? "Working…" : mode === "login" ? "Sign in" : mode === "register" ? "Create student account" : "Continue"}<ArrowRight size={16} /></button></form>{mode === "login" && <><Link className="auth-secondary" to="/auth/forgot-password">Forgot password?</Link><p className="auth-switch">New to CODEAN? <Link to="/auth/register">Create a student account</Link></p></>}{mode === "register" && <><p className="registration-note"><ShieldCheck size={14} /> Teacher accounts are created by a platform administrator.</p><p className="auth-switch">Already have an account? <Link to="/auth/login">Sign in</Link></p></>}</div></main></div>;
+  const isRegister = mode === "register";
+  return <div className="auth-page"><aside><Link to="/" className="brand"><span className="brand-mark"><Code2 size={20} /></span>CODEAN</Link><div><p className="eyebrow">Focused learning</p><h2>Small steps. Real projects. Visible progress.</h2><p>Join a workspace built around doing the work, reviewing feedback, and improving deliberately.</p></div><span>Trusted by 18,000+ learners</span></aside><main><div className="auth-card clerk-auth-card"><Link className="back-link" to="/"><ArrowLeft size={15} /> Back to CODEAN</Link><p className="eyebrow">Account access</p>{isRegister ? <SignUp routing="hash" signInUrl="/auth/login" afterSignUpUrl="/dashboard" appearance={{ elements: { rootBox: "clerk-root", card: "clerk-card" } }} /> : <SignIn routing="hash" signUpUrl="/auth/register" afterSignInUrl="/dashboard" appearance={{ elements: { rootBox: "clerk-root", card: "clerk-card" } }} />}{isRegister && <p className="registration-note"><ShieldCheck size={14} /> Teacher accounts are created by a platform administrator.</p>}</div></main></div>;
 }
 
 export function CheckoutPage() {

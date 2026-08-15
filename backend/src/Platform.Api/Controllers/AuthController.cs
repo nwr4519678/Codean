@@ -8,11 +8,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Platform.Application.Features.Authentication.Dtos;
 using Platform.Domain.Results;
 using Swashbuckle.AspNetCore.Annotations;
 using Error = Platform.Domain.Results.Error;
 using ErrorType = Platform.Domain.Results.ErrorType;
+using Platform.Infrastructure.Persistence.Context;
 
 namespace Platform.Api.Controllers;
 
@@ -23,8 +25,30 @@ namespace Platform.Api.Controllers;
 public sealed class AuthController : ApiController
 {
     private readonly ISender _sender;
+    private readonly AppDbContext? _db;
 
-    public AuthController(ISender sender) => _sender = sender;
+    public AuthController(ISender sender, AppDbContext? db = null) { _sender = sender; _db = db; }
+
+    /// <summary>Synchronizes a Supabase Auth identity with the application profile.</summary>
+    [HttpPost("sync-profile")]
+    [Authorize]
+    public async Task<IActionResult> SyncProfile([FromBody] SyncProfileRequest request, CancellationToken ct)
+    {
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                    ?? User.FindFirst("email")?.Value;
+        if (string.IsNullOrWhiteSpace(email)) return Unauthorized();
+        if (_db is null) return StatusCode(500, new ProblemDetails { Title = "Database unavailable" });
+        email = email.Trim().ToLowerInvariant();
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == email, ct);
+        if (user is null) return NotFound(new ProblemDetails { Title = "Profile not found", Detail = "The authenticated profile could not be provisioned." });
+        if (!string.IsNullOrWhiteSpace(request.FullName))
+        {
+            user.FullName = request.FullName.Trim();
+            user.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
+        }
+        return Ok(new { userId = user.Id, email = user.Email, fullName = user.FullName });
+    }
 
     // ── Registration ─────────────────────────────────────────────────────────
 
@@ -219,3 +243,5 @@ public sealed class AuthController : ApiController
     }
 
 }
+
+public sealed record SyncProfileRequest(string? FullName);

@@ -1,6 +1,17 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, API_URLS } from '@platform/config';
 import { RefreshTokenResponse } from '@platform/contracts';
+import { getSupabaseAccessToken, supabaseRefreshSession } from './auth/supabase';
+
+type AuthTokenProvider = () => string | null | Promise<string | null>;
+let authTokenProvider: AuthTokenProvider | null = null;
+
+export const setAuthTokenProvider = (provider: AuthTokenProvider | null) => {
+  authTokenProvider = provider;
+};
+
+export const getCurrentAuthToken = async (): Promise<string | null> =>
+  authTokenProvider ? await authTokenProvider() : getStoredAccessToken();
 
 const ACCESS_TOKEN_KEY  = 'platform_access_token';
 const REFRESH_TOKEN_KEY = 'platform_refresh_token';
@@ -10,7 +21,7 @@ const TOKEN_EXPIRY_KEY  = 'platform_token_expiry'; // epoch ms
 
 export const getStoredAccessToken = (): string | null => {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return getSupabaseAccessToken() ?? localStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
 export const getStoredRefreshToken = (): string | null => {
@@ -41,6 +52,8 @@ export const clearAuthTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(TOKEN_EXPIRY_KEY);
+  localStorage.removeItem('supabase_access_token');
+  localStorage.removeItem('supabase_refresh_token');
   if (_refreshTimer !== null) {
     clearTimeout(_refreshTimer);
     _refreshTimer = null;
@@ -72,6 +85,10 @@ function scheduleProactiveRefresh() {
 }
 
 async function doProactiveRefresh() {
+  if (getSupabaseAccessToken()) {
+    try { await supabaseRefreshSession(); } catch { clearAuthTokens(); }
+    return;
+  }
   const refreshToken = getStoredRefreshToken();
   if (!refreshToken) return;
 
@@ -103,8 +120,8 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor: attach Bearer token
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getStoredAccessToken();
+  async (config: InternalAxiosRequestConfig) => {
+    const token = authTokenProvider ? await authTokenProvider() : getStoredAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -157,6 +174,22 @@ apiClient.interceptors.response.use(
 
     retryableRequest._retry = true;
     isRefreshing = true;
+
+    if (getSupabaseAccessToken()) {
+      try {
+        const session = await supabaseRefreshSession();
+        if (!session) throw new Error('Supabase session has expired.');
+        processQueue(null, session.access_token);
+        isRefreshing = false;
+        retryableRequest.headers.Authorization = `Bearer ${session.access_token}`;
+        return apiClient(retryableRequest);
+      } catch (refreshErr) {
+        processQueue(refreshErr, null);
+        clearAuthTokens();
+        isRefreshing = false;
+        return Promise.reject(refreshErr);
+      }
+    }
 
     const refreshToken = getStoredRefreshToken();
     if (!refreshToken) {
