@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Camera,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -13,10 +14,16 @@ import {
   Code2,
   FileCheck2,
   FileText,
+  GraduationCap,
+  Mail,
   MessageSquareText,
+  Pencil,
+  Phone,
   Play,
   Search,
   Send,
+  ShieldCheck,
+  School,
   Sparkles,
   Trophy,
   UserRound,
@@ -211,7 +218,9 @@ export function StudentProfile() {
   const load = () => { setLoading(true); void usersApi.getStudentProfile().then(setProfile).catch((cause) => setError(messageFor(cause, "Unable to load your profile."))).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []); if (loading) return <LoadingState />; if (error || !profile) return <ErrorState message={error || "Profile not found."} retry={load} />;
   const initials = profile.fullName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
-  return <><StudentPageHeader eyebrow="Your account" title="Profile" copy="Your personal learning profile from CODEAN." action={<button className="button button-outline" type="button" onClick={() => openUserProfile()}>Manage profile photo</button>} /><section className="profile-grid"><article className="profile-card profile-card-featured"><span className="profile-avatar">{user?.imageUrl ? <img src={user.imageUrl} alt="" /> : initials}</span><div><p className="eyebrow">Your identity</p><h2>{profile.fullName}</h2><p>{profile.email}</p><span className="status-badge success">Student</span></div><p className="profile-card-note">Your photo is managed by Clerk. Google and Microsoft profile photos appear here automatically, and you can change yours from Manage profile photo.</p></article><section className="table-panel"><div className="section-heading compact"><div><p className="eyebrow">Account information</p><h2>Profile details</h2></div><Link className="button button-primary" to="/settings">Edit profile</Link></div><dl className="detail-list"><div><dt>Email</dt><dd>{profile.email}</dd></div><div><dt>Phone</dt><dd>{profile.phone || "Not provided"}</dd></div><div><dt>Grade</dt><dd>{profile.grade || "Not provided"}</dd></div><div><dt>School</dt><dd>{profile.school || "Not provided"}</dd></div></dl></section></section></>;
+  const profileValues = [profile.fullName, profile.email, profile.phone, profile.grade, profile.school];
+  const profileCompletion = Math.round((profileValues.filter(Boolean).length / profileValues.length) * 100);
+  return <><StudentPageHeader eyebrow="Your account" title="Profile" copy="Manage your identity, learning details, and account connections." action={<Link className="button button-primary" to="/settings"><Pencil size={15} /> Edit profile</Link>} /><section className="profile-page"><article className="profile-cover"><div className="profile-cover-glow" /><div className="profile-hero-content"><button className="profile-avatar profile-avatar-large" type="button" onClick={() => openUserProfile()} aria-label="Change profile photo">{user?.imageUrl ? <img src={user.imageUrl} alt="" /> : initials}<span className="profile-avatar-camera"><Camera size={14} /></span></button><div className="profile-identity"><p className="profile-overline">CODEAN learner</p><h2>{profile.fullName}</h2><p>{profile.email}</p><div className="profile-badges"><span className="profile-role-badge"><GraduationCap size={14} /> Student</span><span className="profile-verified"><ShieldCheck size={14} /> Account verified</span></div></div><div className="profile-hero-actions"><button className="button button-light" type="button" onClick={() => openUserProfile()}><Camera size={15} /> Change photo</button><Link className="profile-text-link" to="/settings">Account settings <ArrowRight size={15} /></Link></div></div></article><div className="profile-content-grid"><div className="profile-main-column"><section className="profile-panel profile-overview-panel"><div className="profile-panel-heading"><div><p className="eyebrow">At a glance</p><h2>Your account overview</h2></div><span className="profile-live-indicator"><span /> Live account</span></div><div className="profile-stat-grid"><div><span className="profile-stat-icon blue"><ShieldCheck size={17} /></span><p><strong>{profileCompletion}%</strong><small>Profile complete</small></p></div><div><span className="profile-stat-icon green"><BookOpen size={17} /></span><p><strong>Student</strong><small>Current role</small></p></div><div><span className="profile-stat-icon amber"><Mail size={17} /></span><p><strong>Active</strong><small>Email status</small></p></div></div></section><section className="profile-panel"><div className="profile-panel-heading"><div><p className="eyebrow">Personal information</p><h2>Profile details</h2></div><Link className="profile-panel-link" to="/settings">Edit details <ChevronRight size={15} /></Link></div><div className="profile-details-grid"><div className="profile-detail-item"><span><Mail size={17} /></span><div><small>Email address</small><strong>{profile.email}</strong></div></div><div className="profile-detail-item"><span><Phone size={17} /></span><div><small>Phone number</small><strong>{profile.phone || "Not provided"}</strong></div></div><div className="profile-detail-item"><span><GraduationCap size={17} /></span><div><small>Grade</small><strong>{profile.grade || "Not provided"}</strong></div></div><div className="profile-detail-item"><span><School size={17} /></span><div><small>School</small><strong>{profile.school || "Not provided"}</strong></div></div></div></section></div><aside className="profile-side-column"><section className="profile-panel profile-completion-panel"><div className="profile-panel-heading"><div><p className="eyebrow">Profile strength</p><h2>Keep it complete</h2></div><span className="profile-completion-value">{profileCompletion}%</span></div><div className="profile-progress-track"><span style={{ width: `${profileCompletion}%` }} /></div><p>Add your grade, school, and phone number to help CODEAN personalize your learning experience.</p><Link className="button button-primary" to="/settings">Complete profile <ArrowRight size={15} /></Link></section><section className="profile-panel profile-security-panel"><div className="profile-panel-heading"><div><p className="eyebrow">Security & privacy</p><h2>Connected services</h2></div><ShieldCheck size={19} /></div><div className="profile-connection"><span className="connection-icon clerk">C</span><div><strong>Clerk authentication</strong><small>Secure sign-in and profile photo</small></div><span className="connection-status">Connected</span></div><div className="profile-connection"><span className="connection-icon database">S</span><div><strong>Supabase profile</strong><small>Learning data and preferences</small></div><span className="connection-status">Synced</span></div></section></aside></div></section></>;
 }
 
 export function StudentSettings() {
