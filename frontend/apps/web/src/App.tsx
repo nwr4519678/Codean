@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useAuth as useClerkAuth, useUser } from "@clerk/clerk-react";
 import {
   ArrowRight,
   Bell,
@@ -40,7 +40,9 @@ import { authApi, notificationsApi } from "@platform/api";
 import type { CurrentUserResponse } from "@platform/contracts";
 import {
   AuthPage,
+  CommunityPage,
   CheckoutPage,
+  OutcomesPage,
   PricingPage,
   PublicHome,
   StatusPage,
@@ -108,17 +110,36 @@ const teacherNavItems = [
 
 function Shell({ currentUser }: { currentUser: CurrentUserResponse }) {
   const { signOut } = useClerkAuth();
+  const { user } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notificationPreview, setNotificationPreview] = useState<{ id: number; title: string; body: string; isRead: boolean }[]>([]);
   const location = useLocation();
   const role = location.pathname.startsWith("/teacher") ? "Teacher" : "Student";
   const activeNavItems = role === "Teacher" ? teacherNavItems : navItems;
+  const initials = currentUser.fullName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
 
   useEffect(() => {
     if (role !== "Student") return;
-    void notificationsApi.getUnreadCount().then(setUnreadNotifications).catch(() => setUnreadNotifications(0));
+    void Promise.all([notificationsApi.getUnreadCount(), notificationsApi.getAll({ pageSize: 5 })])
+      .then(([count, result]) => { setUnreadNotifications(count); setNotificationPreview(result.items); })
+      .catch(() => { setUnreadNotifications(0); setNotificationPreview([]); });
   }, [role, location.pathname]);
+
+  const toggleNotifications = () => {
+    setNotificationOpen((open) => !open);
+    if (!notificationPreview.length) {
+      void notificationsApi.getAll({ pageSize: 5 }).then((result) => setNotificationPreview(result.items)).catch(() => undefined);
+    }
+  };
+
+  const markNotificationsRead = async () => {
+    await notificationsApi.markAllAsRead();
+    setUnreadNotifications(0);
+    setNotificationPreview((items) => items.map((item) => ({ ...item, isRead: true })));
+  };
 
   return (
     <div className="app-shell">
@@ -152,7 +173,7 @@ function Shell({ currentUser }: { currentUser: CurrentUserResponse }) {
           <a className="nav-item" href="#help"><CircleHelp size={19} /><span>Help center</span></a>
           <NavLink className="nav-item" to="/settings"><Settings size={19} /><span>Settings</span></NavLink>
           <Link className="profile-strip" to={role === "Student" ? "/profile" : "/teacher/dashboard"}>
-            <span className="avatar">{currentUser.fullName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
+            <span className="avatar">{user?.imageUrl ? <img src={user.imageUrl} alt="" /> : initials}</span>
             <div><strong>{currentUser.fullName}</strong><span>{currentUser.role}</span></div>
             <ChevronRight size={17} />
           </Link>
@@ -178,8 +199,11 @@ function Shell({ currentUser }: { currentUser: CurrentUserResponse }) {
             <kbd>Ctrl K</kbd>
           </button>
           <div className="topbar-actions">
-            <button className="icon-button notification-button" aria-label="Notifications"><Bell size={20} /><span /></button>
-            <Link className="top-avatar" to={role === "Student" ? "/profile" : "/teacher/dashboard"} aria-label="Open profile">{currentUser.fullName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</Link>
+            <div className="notification-menu">
+              <button className="notification-button" type="button" aria-label="Open notifications" aria-expanded={notificationOpen} title="View notifications" onClick={toggleNotifications}><Bell size={20} /><span className={unreadNotifications > 0 ? "notification-dot" : ""} /><strong>Notifications</strong>{unreadNotifications > 0 && <em>{unreadNotifications}</em>}</button>
+              {notificationOpen && <section className="notification-popover" aria-label="Recent notifications"><header><div><p className="eyebrow">Your inbox</p><h2>Notifications</h2></div>{unreadNotifications > 0 && <button type="button" onClick={() => void markNotificationsRead()}>Mark all read</button>}</header>{notificationPreview.length ? <div>{notificationPreview.slice(0, 4).map((item) => <article className={item.isRead ? "" : "unread"} key={item.id}><span><MessageSquareText size={15} /></span><p><strong>{item.title}</strong><small>{item.body}</small></p></article>)}</div> : <p className="notification-empty">You are all caught up.</p>}<Link className="button button-outline" to="/notifications" onClick={() => setNotificationOpen(false)}>Open notification center</Link></section>}
+            </div>
+            <Link className="top-avatar" to={role === "Student" ? "/profile" : "/teacher/dashboard"} aria-label="Open profile">{user?.imageUrl ? <img src={user.imageUrl} alt="" /> : initials}</Link>
           </div>
         </header>
         <main className="main-content">
@@ -396,6 +420,8 @@ export default function App() {
       <Route path="/catalog" element={<PublicCatalogPage />} />
       <Route path="/catalog/:courseId" element={<PublicCatalogDetailPage />} />
       <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/outcomes" element={<OutcomesPage />} />
+      <Route path="/community" element={<CommunityPage />} />
       {/* Clerk's path-based flow uses nested URLs for verification and recovery steps. */}
       <Route path="/auth/:mode/*" element={<AuthPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
