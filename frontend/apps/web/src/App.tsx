@@ -14,6 +14,7 @@ import {
   Flame,
   GraduationCap,
   LayoutDashboard,
+  LogOut,
   Menu,
   MessageSquareText,
   Play,
@@ -99,6 +100,7 @@ const teacherNavItems = [
 ];
 
 function Shell() {
+  const { signOut } = useClerkAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
@@ -141,6 +143,14 @@ function Shell() {
             <div><strong>{role === "Teacher" ? "Maya Hassan" : "Nadia Hassan"}</strong><span>{role}</span></div>
             <ChevronRight size={17} />
           </Link>
+          <button
+            className="nav-item sign-out-button"
+            type="button"
+            onClick={() => { void signOut().then(() => window.location.assign("/auth/login")); }}
+          >
+            <LogOut size={19} />
+            <span>Sign out</span>
+          </button>
         </div>
       </aside>
 
