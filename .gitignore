@@ -77,4 +77,5 @@ desktop.ini
 backend/publish-validation/
 backend/publish-self-contained-validation/
 backend/publish-self-contained-x64-validation/
+backend/publish-self-contained-x86-validation/
 "@ | Add-Content .gitignore
