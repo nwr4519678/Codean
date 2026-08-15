@@ -389,7 +389,7 @@ export default function App() {
 }
 
 function AuthenticatedShell() {
-  const { isLoaded, isSignedIn, getToken } = useClerkAuth();
+  const { isLoaded, isSignedIn, getToken, signOut } = useClerkAuth();
   const [verification, setVerification] = useState<"checking" | "authenticated" | "failed">("checking");
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -435,7 +435,7 @@ function AuthenticatedShell() {
   }, [attempt, getToken, isLoaded, isSignedIn]);
 
   if (!isLoaded || verification === "checking") return <main className="status-page"><section><p className="eyebrow">CODEAN workspace</p><h1>Verifying your session...</h1><p>Connecting your Clerk session to your CODEAN account.</p></section></main>;
-  if (verification === "failed") return <main className="status-page"><section><p className="eyebrow">Authentication error</p><h1>We could not verify your session</h1><p role="alert">{error}</p><div className="status-actions">{isSignedIn && <button className="button button-primary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>}<Link className="button button-secondary" to="/auth/login">Return to sign in</Link></div></section></main>;
+  if (verification === "failed") return <main className="status-page"><section><p className="eyebrow">Authentication error</p><h1>We could not verify your session</h1><p role="alert">{error}</p><div className="status-actions">{isSignedIn && <button className="button button-primary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>}{isSignedIn && <button className="button button-secondary" onClick={() => { void signOut().then(() => window.location.assign("/auth/login")); }}>Sign out</button>}<Link className="button button-secondary" to="/auth/login">Return to sign in</Link></div></section></main>;
   return <Shell />;
 }
 
