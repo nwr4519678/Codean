@@ -173,7 +173,7 @@ public static class DependencyInjection
                             if (!user.IsActive) { ctx.Fail("Account is disabled."); return; }
 
                             var identity = (ClaimsIdentity)ctx.Principal!.Identity!;
-                            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                            identity.AddClaim(new Claim("platform_user_id", user.Id.ToString()));
                             identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
                             identity.AddClaim(new Claim(ClaimTypes.Role, user.Role?.Name ?? "Student"));
                             foreach (var permission in PermissionsFor(user.Role?.Name))

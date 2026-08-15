@@ -152,4 +152,23 @@ public class AuthControllerTests
         var ok = result.Should().BeOfType<OkObjectResult>().Subject;
         ok.Value.Should().Be(profile);
     }
+
+    [Fact]
+    public async Task GetCurrentUser_WhenExternalSubjectAndPlatformUserIdPresent_ShouldUsePlatformUserId()
+    {
+        var userClaims = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "user_clerk123"),
+            new Claim("platform_user_id", "10")
+        }, "TestAuth"));
+
+        _sut.ControllerContext.HttpContext.User = userClaims;
+        var profile = new CurrentUserResponse(10, "user@test.com", "User", null, "Student", true, null, DateTime.UtcNow);
+        _sender.Send(Arg.Is<GetCurrentUserQuery>(query => query.UserId == 10), Arg.Any<CancellationToken>())
+               .Returns(Result<CurrentUserResponse>.Success(profile));
+
+        var result = await _sut.GetCurrentUser(CancellationToken.None);
+
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().Be(profile);
+    }
 }

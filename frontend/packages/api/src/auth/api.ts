@@ -31,8 +31,11 @@ export const authApi = {
     return { userId: 0, email: payload.email, fullName, emailVerificationRequired: !session.user.email_confirmed_at };
   },
 
-  getCurrentUser: async (): Promise<CurrentUserResponse> => {
-    const res = await apiClient.get<CurrentUserResponse>(API_URLS.AUTH.ME);
+  getCurrentUser: async (accessToken?: string): Promise<CurrentUserResponse> => {
+    const res = await apiClient.get<CurrentUserResponse>(API_URLS.AUTH.ME, accessToken ? {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      platformSkipAuthRefresh: true,
+    } : undefined);
     return res.data;
   },
 

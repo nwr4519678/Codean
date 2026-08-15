@@ -17,7 +17,8 @@ public sealed class CurrentUser : ICurrentUser
     {
         get
         {
-            var sub = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+            var sub = _httpContextAccessor.HttpContext?.User?.FindFirstValue("platform_user_id")
+                ?? _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? _httpContextAccessor.HttpContext?.User?.FindFirstValue("sub");
             return long.TryParse(sub, out var id) ? id : null;
         }

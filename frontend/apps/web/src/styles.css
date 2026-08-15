@@ -426,6 +426,7 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 .status-page h1 { margin-bottom: 10px; font-size: 34px; }
 .status-page section > p:not(.eyebrow) { max-width: 480px; color: var(--muted); line-height: 1.7; }
 .status-page .button { margin-top: 18px; }
+.status-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .metric-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 25px; }
 .metric-box { min-height: 100px; display: flex; align-items: center; gap: 12px; padding: 18px; border: 1px solid var(--line); border-radius: 7px; background: white; }
 .metric-box > div { display: flex; min-width: 0; flex-direction: column; }
