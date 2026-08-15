@@ -9,8 +9,8 @@ export const learningApi = {
 
   trackLessonProgress: async (payload: {
     lessonId: number;
-    watchTimeSeconds: number;
-    completionPercentage: number;
+    watchTime: number;
+    completion: number;
   }) => {
     const res = await apiClient.post(API_URLS.COURSES.PROGRESS, payload);
     return res.data;

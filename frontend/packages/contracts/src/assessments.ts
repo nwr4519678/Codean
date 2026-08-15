@@ -10,7 +10,8 @@ export interface ExamResponse {
   startDate?: string;
   endDate?: string;
   isPublished: boolean;
-  questionCount: number;
+  questionCount?: number;
+  createdAt: string;
 }
 
 export interface ExamQuestionResponse {
@@ -76,7 +77,8 @@ export interface HomeworkResponse {
   description: string;
   dueDate?: string;
   totalMarks: number;
-  questionCount: number;
+  questionCount?: number;
+  createdAt: string;
 }
 
 export interface HomeworkSubmissionResponse {

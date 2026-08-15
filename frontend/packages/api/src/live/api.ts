@@ -3,6 +3,10 @@ import { API_URLS } from '@platform/config';
 import { LiveSessionResponse } from '@platform/contracts';
 
 export const liveApi = {
+  getUpcoming: async (): Promise<LiveSessionResponse[]> => {
+    const res = await apiClient.get<LiveSessionResponse[]>(API_URLS.LIVE_SESSIONS.UPCOMING);
+    return res.data;
+  },
   getMySessions: async (): Promise<LiveSessionResponse[]> => {
     const res = await apiClient.get<LiveSessionResponse[]>(`${API_URLS.LIVE_SESSIONS.LIST}/me`);
     return res.data;

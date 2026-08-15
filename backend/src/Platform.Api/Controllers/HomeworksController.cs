@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Authorization;
+using Platform.Application.Common.Pagination;
 using Platform.Application.Features.Assessment.Dtos;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -30,6 +31,27 @@ public sealed class HomeworksController : ApiController
     public async Task<IActionResult> CreateHomework([FromBody] CreateHomeworkCommand cmd, CancellationToken ct)
     {
         var result = await _sender.Send(cmd, ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
+    /// <summary>Returns published assignments available to students.</summary>
+    [HttpGet]
+    [SwaggerOperation(Summary = "List Homeworks", Tags = ["Homeworks"])]
+    [ProducesResponseType(typeof(PagedList<HomeworkResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetHomeworks([FromQuery] GetHomeworksPagedQuery query, CancellationToken ct)
+    {
+        var result = await _sender.Send(query, ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
+    /// <summary>Returns one published assignment for a student.</summary>
+    [HttpGet("{id:long}")]
+    [SwaggerOperation(Summary = "Get Homework", Tags = ["Homeworks"])]
+    [ProducesResponseType(typeof(HomeworkResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetHomework([FromRoute] long id, CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetHomeworkByIdQuery(id), ct);
         return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
     }
 

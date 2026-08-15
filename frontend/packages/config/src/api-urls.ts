@@ -42,6 +42,7 @@ export const API_URLS = {
     COURSE_PROGRESS: (courseId: number | string) => `/api/progress/courses/${courseId}`,
   },
   JUDGE: {
+    LIST: '/api/challenges',
     CHALLENGE_DETAIL: (id: number | string) => `/api/challenges/${id}`,
     SUBMIT: (id: number | string) => `/api/challenges/${id}/submit`,
     SUBMISSION_STATUS: (submissionId: number | string) => `/api/submissions/${submissionId}/status`,
@@ -60,6 +61,7 @@ export const API_URLS = {
   },
   LIVE_SESSIONS: {
     LIST: '/api/live-sessions',
+    UPCOMING: '/api/live-sessions/upcoming',
     DETAIL: (id: number | string) => `/api/live-sessions/${id}`,
   },
   ANALYTICS: {

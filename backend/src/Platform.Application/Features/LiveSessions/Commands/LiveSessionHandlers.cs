@@ -189,6 +189,28 @@ public sealed class GetLiveSessionsByTeacherHandler
     }
 }
 
+public sealed class GetMyLiveSessionsHandler
+    : IRequestHandler<GetMyLiveSessionsQuery, Result<IReadOnlyList<LiveSessionResponse>>>
+{
+    private readonly IRepository<LiveSession> _sessions;
+
+    public GetMyLiveSessionsHandler(IRepository<LiveSession> sessions) => _sessions = sessions;
+
+    public async Task<Result<IReadOnlyList<LiveSessionResponse>>> Handle(
+        GetMyLiveSessionsQuery request, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var sessions = await _sessions.ListAsync(
+            session => session.Status != "Cancelled" &&
+                       (session.EndTime == null ? session.StartTime >= now : session.EndTime >= now), ct);
+
+        return Result<IReadOnlyList<LiveSessionResponse>>.Success(
+            sessions.OrderBy(session => session.StartTime)
+                .Select(session => session.ToResponse())
+                .ToList());
+    }
+}
+
 public sealed class RecordAttendanceHandler
     : IRequestHandler<RecordAttendanceCommand, Result<AttendanceResponse>>
 {

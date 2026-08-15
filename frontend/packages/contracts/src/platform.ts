@@ -2,6 +2,7 @@ export interface LiveSessionResponse {
   id: number;
   teacherId: number;
   courseId?: number;
+  moduleId?: number;
   title: string;
   meetingId: string;
   meetingLink: string;
@@ -9,7 +10,10 @@ export interface LiveSessionResponse {
   endTime?: string;
   recordingLink?: string;
   status: 'Scheduled' | 'Live' | 'Completed' | 'Cancelled';
-  provider: string;
+  password?: string;
+  provider?: string;
+  providerName: string;
+  createdAt: string;
 }
 
 export interface ModuleResponse {

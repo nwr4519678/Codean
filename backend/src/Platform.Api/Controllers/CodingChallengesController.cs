@@ -28,6 +28,17 @@ public sealed class CodingChallengesController : ApiController
 
     // ── Challenge Management ──────────────────────────────────────────────
 
+    /// <summary>Returns all coding challenges available for practice.</summary>
+    [HttpGet]
+    [AllowAnonymous]
+    [SwaggerOperation(Summary = "List Coding Challenges", Tags = ["Coding Challenges"])]
+    [ProducesResponseType(typeof(IReadOnlyList<CodingChallengeResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetChallenges(CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetCodingChallengesQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
     /// <summary>Returns challenge details including starter code (test cases hidden).</summary>
     [HttpGet("{id:long}")]
     [AllowAnonymous]

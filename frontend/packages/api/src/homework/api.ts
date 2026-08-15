@@ -11,6 +11,11 @@ export const homeworkApi = {
     return res.data;
   },
 
+  getById: async (id: number | string): Promise<HomeworkResponse> => {
+    const res = await apiClient.get<HomeworkResponse>(`/api/homeworks/${id}`);
+    return res.data;
+  },
+
   create: async (payload: {
     courseId?: number;
     title: string;

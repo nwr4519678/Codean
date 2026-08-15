@@ -8,7 +8,12 @@
     <title>CODEAN</title>
   </head>
   <body>
-    <script>globalThis.__PLATFORM_ENV__ = { VITE_API_URL: "%VITE_API_URL%" };</script>
+    <script>
+      const configuredApiUrl = "%VITE_API_URL%";
+      globalThis.__PLATFORM_ENV__ = {
+        VITE_API_URL: configuredApiUrl.includes("%") ? undefined : configuredApiUrl,
+      };
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

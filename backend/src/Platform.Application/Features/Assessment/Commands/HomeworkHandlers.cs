@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Platform.Application.Common.Abstractions;
+using Platform.Application.Common.Pagination;
 using Platform.Application.Features.Assessment.Dtos;
 using Platform.Application.Features.Assessment.Mapping;
 using Platform.Domain.Entities;
@@ -52,6 +53,59 @@ public sealed class CreateHomeworkHandler : IRequestHandler<CreateHomeworkComman
         await _uow.SaveChangesAsync(ct);
 
         return Result<HomeworkResponse>.Success(homework.ToResponse());
+    }
+}
+
+public sealed class GetHomeworksPagedHandler
+    : IRequestHandler<GetHomeworksPagedQuery, Result<PagedList<HomeworkResponse>>>
+{
+    private readonly IRepository<Homework> _homeworks;
+
+    public GetHomeworksPagedHandler(IRepository<Homework> homeworks) => _homeworks = homeworks;
+
+    public async Task<Result<PagedList<HomeworkResponse>>> Handle(GetHomeworksPagedQuery request, CancellationToken ct)
+    {
+        var query = _homeworks.Query()
+            .Where(homework => homework.CourseId == null || homework.Course!.IsPublished)
+            .AsQueryable();
+
+        if (request.CourseId.HasValue)
+            query = query.Where(homework => homework.CourseId == request.CourseId.Value);
+
+        var projected = query
+            .OrderByDescending(homework => homework.DueDate ?? homework.CreatedAt)
+            .Select(homework => new HomeworkResponse(
+                homework.Id,
+                homework.TeacherId,
+                homework.CourseId,
+                homework.LessonId,
+                homework.Title,
+                homework.Description ?? string.Empty,
+                homework.DueDate,
+                homework.TotalMarks,
+                homework.CreatedAt));
+
+        var page = await PagedList<HomeworkResponse>.CreateAsync(
+            projected, request.PageNumber, request.PageSize, ct);
+        return Result<PagedList<HomeworkResponse>>.Success(page);
+    }
+}
+
+public sealed class GetHomeworkByIdHandler
+    : IRequestHandler<GetHomeworkByIdQuery, Result<HomeworkResponse>>
+{
+    private readonly IRepository<Homework> _homeworks;
+
+    public GetHomeworkByIdHandler(IRepository<Homework> homeworks) => _homeworks = homeworks;
+
+    public async Task<Result<HomeworkResponse>> Handle(GetHomeworkByIdQuery request, CancellationToken ct)
+    {
+        var homework = await _homeworks.FirstOrDefaultAsync(
+            item => item.Id == request.HomeworkId && (item.CourseId == null || item.Course!.IsPublished), ct);
+
+        return homework is null
+            ? Result<HomeworkResponse>.Failure(Error.NotFound("homeworks.not_found", $"Homework {request.HomeworkId} not found."))
+            : Result<HomeworkResponse>.Success(homework.ToResponse());
     }
 }
 

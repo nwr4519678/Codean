@@ -33,6 +33,16 @@ public sealed class LiveSessionsController : ApiController
         return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
     }
 
+    /// <summary>Returns upcoming non-cancelled sessions visible to students.</summary>
+    [HttpGet("upcoming")]
+    [SwaggerOperation(Summary = "Get Upcoming Live Sessions", Tags = ["Live Sessions"])]
+    [ProducesResponseType(typeof(IReadOnlyList<LiveSessionResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUpcomingSessions(CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetMyLiveSessionsQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
     /// <summary>Schedules a new live session on Google Meet or Microsoft Teams.</summary>
     [HttpPost]
     [HasPermission("live-sessions.manage")]
