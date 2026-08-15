@@ -386,8 +386,13 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 .auth-page > aside h2 { font-size: 40px; line-height: 1.2; }
 .auth-page > aside p:not(.eyebrow) { color: #afb6c3; line-height: 1.7; }
 .auth-page > aside > span { color: #8d95a4; font-size: 11px; }
-.auth-page > main { display: grid; place-items: center; padding: 40px 20px; }
-.auth-card { width: min(440px, 100%); }
+.auth-page > main { display: grid; place-items: start center; min-width: 0; padding: clamp(30px, 6vh, 64px) clamp(18px, 4vw, 64px); overflow-y: auto; }
+.auth-card { width: min(680px, 100%); }
+.clerk-auth-card .clerk-root { width: 100%; }
+.clerk-auth-card .clerk-card { width: 100%; max-width: none; padding: clamp(22px, 4vw, 42px); border: 1px solid #e1e5ed; border-radius: 20px; box-shadow: 0 24px 65px rgba(30, 42, 76, .11); }
+.clerk-auth-card .clerk-card form { width: 100%; }
+.clerk-auth-card .clerk-card input { min-height: 48px; }
+.clerk-auth-card .clerk-card button { min-height: 46px; }
 .auth-card h1 { margin-bottom: 8px; font-size: 30px; }
 .auth-card > p:not(.eyebrow,.auth-switch) { color: var(--muted); font-size: 13px; }
 .auth-card form { margin-top: 30px; }
@@ -715,7 +720,8 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
   .course-detail-hero h1 { font-size: 32px; }
   .auth-page > aside { display: none; }
   .auth-page { display: block; }
-  .auth-page > main { min-height: 100vh; }
+  .auth-page > main { min-height: 100vh; padding: 24px 14px 40px; }
+  .clerk-auth-card .clerk-card { padding: 22px 18px; border-radius: 16px; }
   .form-grid.two { grid-template-columns: 1fr; }
   .page-heading > .button, .page-heading > .button-row { flex: 0 0 auto; }
   .page-heading { flex-direction: column; }
