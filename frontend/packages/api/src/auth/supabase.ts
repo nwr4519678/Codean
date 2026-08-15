@@ -3,7 +3,7 @@ export type SupabaseSession = {
   refresh_token: string;
   expires_in?: number;
   expires_at?: number;
-  user: { id: string; email?: string; user_metadata?: Record<string, unknown>; email_confirmed_at?: string | null };
+  user?: { id: string; email?: string; user_metadata?: Record<string, unknown>; email_confirmed_at?: string | null };
 };
 
 type RuntimeEnv = {
