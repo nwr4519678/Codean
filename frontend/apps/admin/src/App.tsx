@@ -29,14 +29,13 @@ import {
   X,
 } from "lucide-react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { getSupabaseAccessToken, supabaseLogout, supabasePasswordLogin } from "@platform/api";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5294";
 const PUBLIC_APP_URL = import.meta.env.VITE_PUBLIC_APP_URL ?? "http://localhost:5173";
-const ACCESS_TOKEN_KEY = "codean_admin_access_token";
-const REFRESH_TOKEN_KEY = "codean_admin_refresh_token";
+const ACCESS_TOKEN_KEY = "supabase_access_token";
 
 type AdminUser = { userId: number; email: string; fullName: string; role: string };
-type LoginResponse = AdminUser & { accessToken: string; refreshToken: string; accessTokenExpiresAt: string; refreshTokenExpiresAt: string };
 type AuthState = { user: AdminUser | null; checking: boolean; login: (email: string, password: string) => Promise<void>; logout: () => void };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -60,7 +59,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const token = getSupabaseAccessToken();
     if (!token) { setChecking(false); return; }
     apiRequest<AdminUser & { emailConfirmed: boolean; createdAt: string }>("/api/auth/me")
       .then((current) => {
@@ -69,22 +68,21 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         localStorage.removeItem(ACCESS_TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
       })
       .finally(() => setChecking(false));
   }, []);
 
   const login = async (email: string, password: string) => {
-    const result = await apiRequest<LoginResponse>("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password, rememberMe: true }) });
+    await supabasePasswordLogin(email, password);
+    const result = await apiRequest<AdminUser & { emailConfirmed: boolean }>("/api/auth/me");
     if (result.role.toLowerCase() !== "admin") throw new Error("This console is restricted to platform administrators.");
-    localStorage.setItem(ACCESS_TOKEN_KEY, result.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, result.refreshToken);
     setUser({ userId: result.userId, email: result.email, fullName: result.fullName, role: result.role });
   };
 
   const logout = () => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    void supabaseLogout();
     setUser(null);
   };
 
