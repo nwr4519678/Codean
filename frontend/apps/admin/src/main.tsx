@@ -17,10 +17,18 @@ function ClerkTokenBridge() {
 }
 
 const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const allowedRedirectOrigins = [
+  window.location.origin,
+  "https://codean-web.vercel.app",
+  "https://codean-admin.vercel.app",
+];
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider
+      publishableKey={publishableKey}
+      allowedRedirectOrigins={allowedRedirectOrigins}
+    >
       <ClerkTokenBridge />
       <BrowserRouter><App /></BrowserRouter>
     </ClerkProvider>
