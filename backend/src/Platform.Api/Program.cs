@@ -53,8 +53,12 @@ try
         if (builder.Configuration.GetValue("RunMigrationsOnStartup", app.Environment.IsDevelopment()))
             await db.Database.MigrateAsync();
 
-        // Seed core reference data (Roles etc.) & dev admin account in development mode only
-        await Platform.Infrastructure.Persistence.DatabaseSeeder.SeedAsync(db, seeder, app.Environment.IsDevelopment(), hasher);
+        // Seed core reference data (Roles etc.). Development admin seeding is
+        // explicitly configurable so local runs against shared external
+        // databases do not create development credentials there.
+        var seedDevelopmentAdmin = builder.Configuration.GetValue(
+            "SeedDevelopmentAdmin", app.Environment.IsDevelopment());
+        await Platform.Infrastructure.Persistence.DatabaseSeeder.SeedAsync(db, seeder, seedDevelopmentAdmin, hasher);
     }
 
     app.Run();
