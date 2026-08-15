@@ -23,13 +23,12 @@ export const authApi = {
     lastName: string;
     role?: string;
   }): Promise<RegisterResponse> => {
-    const email = payload.email.trim();
     const fullName = `${payload.firstName} ${payload.lastName}`.trim();
-    const session = await supabasePasswordSignup(email, payload.password, fullName);
+    const session = await supabasePasswordSignup(payload.email, payload.password, fullName);
     if (session.access_token) {
       await apiClient.post("/api/auth/sync-profile", { fullName });
     }
-    return { userId: 0, email, fullName, emailVerificationRequired: !session.user?.email_confirmed_at };
+    return { userId: 0, email: payload.email, fullName, emailVerificationRequired: !session.user.email_confirmed_at };
   },
 
   getCurrentUser: async (): Promise<CurrentUserResponse> => {

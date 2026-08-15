@@ -61,6 +61,7 @@ public static class DependencyInjection
         // ── Options ─────────────────────────────────────────────────────────
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<SupabaseOptions>(configuration.GetSection(SupabaseOptions.SectionName));
+        services.Configure<ClerkOptions>(configuration.GetSection(ClerkOptions.SectionName));
 
         // LockoutSettings lives in Application (business rule) — bound here by the host
         services.Configure<LockoutSettings>(configuration.GetSection(LockoutSettings.SectionName));
@@ -70,11 +71,15 @@ public static class DependencyInjection
         services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
 
         var supabaseUrl = configuration["Supabase:Url"]?.TrimEnd('/');
-        var useSupabaseAuth = !string.IsNullOrWhiteSpace(supabaseUrl);
+        var clerkAuthority = configuration["Clerk:Authority"]?.TrimEnd('/');
+        var clerkAudience = configuration["Clerk:Audience"];
+        var useClerkAuth = !string.IsNullOrWhiteSpace(clerkAuthority);
+        var useSupabaseAuth = !useClerkAuth && !string.IsNullOrWhiteSpace(supabaseUrl);
+        var useExternalAuth = useClerkAuth || useSupabaseAuth;
 
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
-            .Validate(o => useSupabaseAuth || configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development" ||
+            .Validate(o => useExternalAuth || configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development" ||
                           o.SigningKeys.Any(k => k.IsActive && k.Secret.Length >= 32) ||
                           o.Secret.Length >= 32,
                 "A production JWT signing secret of at least 32 characters is required.")
@@ -103,7 +108,13 @@ public static class DependencyInjection
             })
             .AddJwtBearer(options =>
             {
-                if (useSupabaseAuth)
+                if (useClerkAuth)
+                {
+                    options.Authority = clerkAuthority;
+                    if (!string.IsNullOrWhiteSpace(clerkAudience)) options.Audience = clerkAudience;
+                    options.RequireHttpsMetadata = true;
+                }
+                else if (useSupabaseAuth)
                 {
                     options.Authority = $"{supabaseUrl}/auth/v1";
                     options.Audience = "authenticated";
@@ -111,12 +122,12 @@ public static class DependencyInjection
                 }
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = !useSupabaseAuth,
-                    ValidIssuer = useSupabaseAuth ? $"{supabaseUrl}/auth/v1" : jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = useSupabaseAuth ? "authenticated" : jwtOptions.Audience,
-                    ValidateIssuerSigningKey = !useSupabaseAuth,
-                    IssuerSigningKeys = useSupabaseAuth ? null : signingKeys,
+                    ValidateIssuer = useExternalAuth,
+                    ValidIssuer = useClerkAuth ? clerkAuthority : useSupabaseAuth ? $"{supabaseUrl}/auth/v1" : jwtOptions.Issuer,
+                    ValidateAudience = useClerkAuth ? !string.IsNullOrWhiteSpace(clerkAudience) : true,
+                    ValidAudience = useClerkAuth ? clerkAudience : useSupabaseAuth ? "authenticated" : jwtOptions.Audience,
+                    ValidateIssuerSigningKey = !useExternalAuth,
+                    IssuerSigningKeys = useExternalAuth ? null : signingKeys,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromMinutes(5)
                 };
@@ -126,12 +137,12 @@ public static class DependencyInjection
                 {
                     OnTokenValidated = async ctx =>
                     {
-                        if (useSupabaseAuth)
+                        if (useExternalAuth)
                         {
                             var email = ctx.Principal?.FindFirst("email")?.Value?.Trim().ToLowerInvariant();
                             if (string.IsNullOrWhiteSpace(email))
                             {
-                                ctx.Fail("Supabase token does not contain an email claim.");
+                                ctx.Fail("External identity token does not contain an email claim.");
                                 return;
                             }
 

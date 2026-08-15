@@ -11,6 +11,7 @@
     "preview": "vite preview --port 4173"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^4.32.5",
     "@platform/api": "workspace:*",
     "@platform/ui": "workspace:*",
     "lucide-react": "^0.468.0",

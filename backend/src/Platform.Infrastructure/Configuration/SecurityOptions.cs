@@ -11,6 +11,13 @@ public sealed class SupabaseOptions
     public string ServiceRoleKey { get; set; } = "";
 }
 
+public sealed class ClerkOptions
+{
+    public const string SectionName = "Clerk";
+    public string Authority { get; set; } = "";
+    public string Audience { get; set; } = "";
+}
+
 public sealed class SigningKeyOptions
 {
     public string Kid { get; set; } = "default-key-id";

@@ -3,6 +3,16 @@ import { API_BASE_URL, API_URLS } from '@platform/config';
 import { RefreshTokenResponse } from '@platform/contracts';
 import { getSupabaseAccessToken, supabaseRefreshSession } from './auth/supabase';
 
+type AuthTokenProvider = () => string | null | Promise<string | null>;
+let authTokenProvider: AuthTokenProvider | null = null;
+
+export const setAuthTokenProvider = (provider: AuthTokenProvider | null) => {
+  authTokenProvider = provider;
+};
+
+export const getCurrentAuthToken = async (): Promise<string | null> =>
+  authTokenProvider ? await authTokenProvider() : getStoredAccessToken();
+
 const ACCESS_TOKEN_KEY  = 'platform_access_token';
 const REFRESH_TOKEN_KEY = 'platform_refresh_token';
 const TOKEN_EXPIRY_KEY  = 'platform_token_expiry'; // epoch ms
@@ -110,8 +120,8 @@ export const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor: attach Bearer token
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getStoredAccessToken();
+  async (config: InternalAxiosRequestConfig) => {
+    const token = authTokenProvider ? await authTokenProvider() : getStoredAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
