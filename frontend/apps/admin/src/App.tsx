@@ -99,7 +99,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 function LoginPage() {
   const { user } = useAuth();
   if (user) return <Navigate to="/" replace />;
-  return <main className="login-page"><section className="login-brand"><a href={PUBLIC_APP_URL} className="brand"><span><Code2 size={21} /></span>CODEAN</a><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><SignIn routing="hash" afterSignInUrl="/" appearance={{ elements: { rootBox: "clerk-root", card: "clerk-card" } }} /></section></main>;
+  return <main className="login-page"><section className="login-brand"><a href={PUBLIC_APP_URL} className="brand"><span><Code2 size={21} /></span>CODEAN</a><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><SignIn routing="path" path="/login" afterSignInUrl="/" appearance={{ elements: { rootBox: "clerk-root", card: "clerk-card" } }} /></section></main>;
 }
 
 const navItems = [
