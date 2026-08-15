@@ -28,7 +28,7 @@ export const authApi = {
     if (session.access_token) {
       await apiClient.post("/api/auth/sync-profile", { fullName });
     }
-    return { userId: 0, email: payload.email, fullName, emailVerificationRequired: !session.user?.email_confirmed_at };
+    return { userId: 0, email, fullName, emailVerificationRequired: !session.user?.email_confirmed_at };
   },
 
   getCurrentUser: async (): Promise<CurrentUserResponse> => {
