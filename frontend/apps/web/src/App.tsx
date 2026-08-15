@@ -365,7 +365,8 @@ export default function App() {
       <Route path="/catalog" element={<CourseCatalog />} />
       <Route path="/catalog/:courseId" element={<CourseDetail />} />
       <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/auth/:mode" element={<AuthPage />} />
+      {/* Clerk's path-based flow uses nested URLs for verification and recovery steps. */}
+      <Route path="/auth/:mode/*" element={<AuthPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/checkout/success" element={<StatusPage status="success" />} />
       <Route path="/unauthorized" element={<StatusPage status="unauthorized" />} />

@@ -176,5 +176,5 @@ function SettingsPage() { return <><Header eyebrow="Platform configuration" titl
 function DataTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) { return <section className="panel table-panel"><table><thead><tr>{headers.map((header,index) => <th key={`${header}-${index}`}>{header}</th>)}</tr></thead><tbody>{rows.map((row,rowIndex) => <tr key={rowIndex}>{row.map((cell,index) => <td key={index}>{cell}</td>)}</tr>)}</tbody></table></section>; }
 
 export default function App() {
-  return <AuthProvider><Routes><Route path="/login" element={<LoginPage />} /><Route path="/*" element={<Protected><ConsoleLayout /></Protected>} /></Routes></AuthProvider>;
+  return <AuthProvider><Routes><Route path="/login/*" element={<LoginPage />} /><Route path="/*" element={<Protected><ConsoleLayout /></Protected>} /></Routes></AuthProvider>;
 }
