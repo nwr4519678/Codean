@@ -6,6 +6,7 @@
 .env.*
 !.env.example
 !.env.sample
+appsettings.Production.json
 
 # ==============================
 # Node / Next.js
