@@ -76,4 +76,5 @@ desktop.ini
 *.swp
 backend/publish-validation/
 backend/publish-self-contained-validation/
+backend/publish-self-contained-x64-validation/
 "@ | Add-Content .gitignore
