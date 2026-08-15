@@ -31,6 +31,7 @@ import {
 import { Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5294";
+const PUBLIC_APP_URL = import.meta.env.VITE_PUBLIC_APP_URL ?? "http://localhost:5173";
 const ACCESS_TOKEN_KEY = "codean_admin_access_token";
 const REFRESH_TOKEN_KEY = "codean_admin_refresh_token";
 
@@ -116,7 +117,7 @@ function LoginPage() {
     event.preventDefault(); setError(""); setLoading(true);
     try { await login(email, password); navigate("/"); } catch (err) { setError(err instanceof Error ? err.message : "Unable to sign in."); } finally { setLoading(false); }
   };
-  return <main className="login-page"><section className="login-brand"><Link to="http://localhost:5173" className="brand"><span><Code2 size={21} /></span>CODEAN</Link><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><form onSubmit={submit}><span className="lock-mark"><LockKeyhole size={22} /></span><p className="kicker">Administrator access</p><h2>Sign in to the console</h2><p>Use an account with the Admin role.</p>{error && <div className="error-message">{error}</div>}<label><span>Email address</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="admin@platform.com" /></label><label><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••••••" /></label><button disabled={loading}>{loading ? "Verifying..." : "Sign in securely"}<ArrowRight size={17} /></button></form></section></main>;
+  return <main className="login-page"><section className="login-brand"><a href={PUBLIC_APP_URL} className="brand"><span><Code2 size={21} /></span>CODEAN</a><div><p className="kicker">Restricted system</p><h1>Platform administration, separated by design.</h1><p>Manage identities, access, catalog governance, subscriptions, and security history from a dedicated console.</p></div><footer><ShieldCheck size={16} /> Protected by role-based access control</footer></section><section className="login-form-wrap"><form onSubmit={submit}><span className="lock-mark"><LockKeyhole size={22} /></span><p className="kicker">Administrator access</p><h2>Sign in to the console</h2><p>Use an account with the Admin role.</p>{error && <div className="error-message">{error}</div>}<label><span>Email address</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="admin@platform.com" /></label><label><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••••••" /></label><button disabled={loading}>{loading ? "Verifying..." : "Sign in securely"}<ArrowRight size={17} /></button></form></section></main>;
 }
 
 const navItems = [
