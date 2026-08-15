@@ -5,6 +5,7 @@ import {
   CourseDetailResponse,
   PagedList,
   StudentProgressResponse,
+  CourseProgressResponse,
 } from '@platform/contracts';
 
 export const coursesApi = {
@@ -38,13 +39,13 @@ export const coursesApi = {
     return res.data;
   },
 
-  trackProgress: async (payload: { lessonId: number; watchTimeSeconds: number; completionPercentage: number }): Promise<StudentProgressResponse> => {
+  trackProgress: async (payload: { lessonId: number; watchTime: number; completion: number }): Promise<StudentProgressResponse> => {
     const res = await apiClient.post<StudentProgressResponse>(API_URLS.COURSES.PROGRESS, payload);
     return res.data;
   },
 
-  getCourseProgress: async (courseId: number | string): Promise<StudentProgressResponse[]> => {
-    const res = await apiClient.get<StudentProgressResponse[]>(API_URLS.COURSES.COURSE_PROGRESS(courseId));
+  getCourseProgress: async (courseId: number | string): Promise<CourseProgressResponse> => {
+    const res = await apiClient.get<CourseProgressResponse>(API_URLS.COURSES.COURSE_PROGRESS(courseId));
     return res.data;
   },
 };

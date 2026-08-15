@@ -8,16 +8,20 @@ export interface TestCaseDto {
 
 export interface CodingChallengeResponse {
   id: number;
+  teacherId: number;
   title: string;
   description: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  category: string;
-  points: number;
-  timeLimitSeconds: number;
-  memoryLimitMb: number;
-  starterCode?: string;
-  supportedLanguages: string[];
-  testCases: TestCaseDto[];
+  language: string;
+  difficulty: string;
+  marks: number;
+  createdAt: string;
+  category?: string;
+  points?: number;
+  timeLimitSeconds?: number;
+  memoryLimitMb?: number;
+  starterCode: string;
+  supportedLanguages?: string[];
+  testCases?: TestCaseDto[];
 }
 
 export interface SubmitCodeResponse {

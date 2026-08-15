@@ -7,6 +7,10 @@ import {
 } from '@platform/contracts';
 
 export const judgeApi = {
+  list: async (): Promise<CodingChallengeResponse[]> => {
+    const res = await apiClient.get<CodingChallengeResponse[]>(API_URLS.JUDGE.LIST);
+    return res.data;
+  },
   getChallengeById: async (id: number | string): Promise<CodingChallengeResponse> => {
     const res = await apiClient.get<CodingChallengeResponse>(API_URLS.JUDGE.CHALLENGE_DETAIL(id));
     return res.data;

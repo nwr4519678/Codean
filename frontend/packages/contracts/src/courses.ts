@@ -4,9 +4,14 @@ export interface LessonResponse {
   title: string;
   description?: string;
   videoUrl?: string;
-  durationSeconds: number;
+  duration?: number;
+  durationSeconds?: number;
   order: number;
-  isFreePreview: boolean;
+  isFreePreview?: boolean;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  resources: LessonResourceResponse[];
   isCompleted?: boolean;
 }
 
@@ -14,8 +19,10 @@ export interface CourseModuleResponse {
   id: number;
   courseId: number;
   title: string;
+  monthNumber: number;
   description?: string;
   order: number;
+  createdAt: string;
   lessons: LessonResponse[];
 }
 
@@ -53,11 +60,34 @@ export interface CourseDetailResponse {
 }
 
 export interface StudentProgressResponse {
+  id: number;
+  studentId: number;
   lessonId: number;
-  watchTimeSeconds: number;
-  completionPercentage: number;
-  isCompleted: boolean;
-  lastAccessedAt: string;
+  completion: number;
+  lastViewed?: string;
+  watchTime: number;
+  watchTimeSeconds?: number;
+  completionPercentage?: number;
+  isCompleted?: boolean;
+  lastAccessedAt?: string;
+}
+
+export interface CourseProgressResponse {
+  courseId: number;
+  totalLessons: number;
+  completedLessons: number;
+  overallCompletionPercentage: number;
+  lessonProgress: StudentProgressResponse[];
+}
+
+export interface LessonResourceResponse {
+  id: number;
+  lessonId: number;
+  resourceType: string;
+  fileUrl: string;
+  fileName: string;
+  fileSizeBytes?: number;
+  createdAt: string;
 }
 
 export interface PagedList<T> {

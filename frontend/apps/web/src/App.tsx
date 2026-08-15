@@ -36,26 +36,13 @@ import {
   useParams,
 } from "react-router-dom";
 import { activity, assessments, courses, curriculum } from "./data";
-import { authApi } from "@platform/api";
+import { authApi, notificationsApi } from "@platform/api";
+import type { CurrentUserResponse } from "@platform/contracts";
 import {
-  AnnouncementsPage,
   AuthPage,
-  BillingPage,
-  CertificatesPage,
   CheckoutPage,
-  CourseCatalog,
-  CourseDetail,
-  ExamPage,
-  HomeworkPage,
-  JudgeChallengePage,
-  JudgePage,
-  LiveRoomPage,
-  LiveSessionsPage,
-  NotificationsPage,
   PricingPage,
-  ProfilePage,
   PublicHome,
-  SettingsPage,
   StatusPage,
   TeacherAnnouncements,
   TeacherCourseEditor,
@@ -69,6 +56,26 @@ import {
   TeacherModules,
   TeacherStudents,
 } from "./pages";
+import {
+  PublicCatalogDetailPage,
+  PublicCatalogPage,
+  StudentAnnouncements,
+  StudentAssessments,
+  StudentBilling,
+  StudentCertificates,
+  StudentCourseWorkspace,
+  StudentCourses,
+  StudentDashboard,
+  StudentExam,
+  StudentHomework,
+  StudentJudge,
+  StudentJudgeChallenge,
+  StudentLiveRoom,
+  StudentNotifications,
+  StudentProfile,
+  StudentSchedule,
+  StudentSettings,
+} from "./student-pages";
 
 const courseImages: Record<string, string> = {
   react:
@@ -99,13 +106,19 @@ const teacherNavItems = [
   { to: "/teacher/announcements", label: "Announcements", icon: Bell },
 ];
 
-function Shell() {
+function Shell({ currentUser }: { currentUser: CurrentUserResponse }) {
   const { signOut } = useClerkAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const location = useLocation();
   const role = location.pathname.startsWith("/teacher") ? "Teacher" : "Student";
   const activeNavItems = role === "Teacher" ? teacherNavItems : navItems;
+
+  useEffect(() => {
+    if (role !== "Student") return;
+    void notificationsApi.getUnreadCount().then(setUnreadNotifications).catch(() => setUnreadNotifications(0));
+  }, [role, location.pathname]);
 
   return (
     <div className="app-shell">
@@ -128,19 +141,19 @@ function Shell() {
               <span>{label}</span>
             </NavLink>
           ))}
-          {role === "Student" && <><p className="nav-label nav-label-spaced">Connect</p><NavLink className="nav-item" to="/announcements"><Bell size={19} /><span>Announcements</span></NavLink><NavLink className="nav-item" to="/live"><Users size={19} /><span>Live sessions</span></NavLink><NavLink className="nav-item" to="/notifications"><MessageSquareText size={19} /><span>Notifications</span><span className="nav-count">3</span></NavLink></>}
+          {role === "Student" && <><p className="nav-label nav-label-spaced">Connect</p><NavLink className="nav-item" to="/announcements"><Bell size={19} /><span>Announcements</span></NavLink><NavLink className="nav-item" to="/live"><Users size={19} /><span>Live sessions</span></NavLink><NavLink className="nav-item" to="/notifications"><MessageSquareText size={19} /><span>Notifications</span>{unreadNotifications > 0 && <span className="nav-count">{unreadNotifications}</span>}</NavLink></>}
         </nav>
 
         <div className="sidebar-foot">
           <div className="streak-panel">
             <span className="streak-icon"><Flame size={18} /></span>
-            <div><strong>7 day streak</strong><span>Keep the momentum</span></div>
+            <div><strong>Keep learning</strong><span>Your progress is saved automatically</span></div>
           </div>
           <a className="nav-item" href="#help"><CircleHelp size={19} /><span>Help center</span></a>
           <NavLink className="nav-item" to="/settings"><Settings size={19} /><span>Settings</span></NavLink>
           <Link className="profile-strip" to={role === "Student" ? "/profile" : "/teacher/dashboard"}>
-            <span className="avatar">NH</span>
-            <div><strong>{role === "Teacher" ? "Maya Hassan" : "Nadia Hassan"}</strong><span>{role}</span></div>
+            <span className="avatar">{currentUser.fullName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span>
+            <div><strong>{currentUser.fullName}</strong><span>{currentUser.role}</span></div>
             <ChevronRight size={17} />
           </Link>
           <button
@@ -166,28 +179,28 @@ function Shell() {
           </button>
           <div className="topbar-actions">
             <button className="icon-button notification-button" aria-label="Notifications"><Bell size={20} /><span /></button>
-            <Link className="top-avatar" to={role === "Student" ? "/profile" : "/teacher/dashboard"} aria-label="Open profile">NH</Link>
+            <Link className="top-avatar" to={role === "Student" ? "/profile" : "/teacher/dashboard"} aria-label="Open profile">{currentUser.fullName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</Link>
           </div>
         </header>
         <main className="main-content">
           <Routes>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/courses/:courseId" element={<CourseWorkspace />} />
-            <Route path="/assessments" element={<Assessments />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/announcements" element={<AnnouncementsPage />} />
-            <Route path="/billing" element={<BillingPage />} />
-            <Route path="/certificates" element={<CertificatesPage />} />
-            <Route path="/exams/:examId" element={<ExamPage />} />
-            <Route path="/homework/:homeworkId" element={<HomeworkPage />} />
-            <Route path="/judge" element={<JudgePage />} />
-            <Route path="/judge/:challengeId" element={<JudgeChallengePage />} />
-            <Route path="/live" element={<LiveSessionsPage />} />
-            <Route path="/live/:sessionId" element={<LiveRoomPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/dashboard" element={<StudentDashboard currentUser={currentUser} />} />
+            <Route path="/courses" element={<StudentCourses />} />
+            <Route path="/courses/:courseId" element={<StudentCourseWorkspace />} />
+            <Route path="/assessments" element={<StudentAssessments />} />
+            <Route path="/schedule" element={<StudentSchedule />} />
+            <Route path="/announcements" element={<StudentAnnouncements />} />
+            <Route path="/billing" element={<StudentBilling />} />
+            <Route path="/certificates" element={<StudentCertificates />} />
+            <Route path="/exams/:examId" element={<StudentExam />} />
+            <Route path="/homework/:homeworkId" element={<StudentHomework />} />
+            <Route path="/judge" element={<StudentJudge />} />
+            <Route path="/judge/:challengeId" element={<StudentJudgeChallenge />} />
+            <Route path="/live" element={<StudentSchedule />} />
+            <Route path="/live/:sessionId" element={<StudentLiveRoom />} />
+            <Route path="/notifications" element={<StudentNotifications />} />
+            <Route path="/profile" element={<StudentProfile />} />
+            <Route path="/settings" element={<StudentSettings />} />
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
             <Route path="/teacher/courses" element={<TeacherCourses />} />
             <Route path="/teacher/courses/new" element={<TeacherCourseEditor />} />
@@ -368,12 +381,20 @@ function Schedule() {
   );
 }
 
+// The legacy teacher-only fixture components remain below for the teacher route.
+// Student routes are intentionally wired to the real API-backed components above.
+void Dashboard;
+void Courses;
+void CourseWorkspace;
+void Assessments;
+void Schedule;
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<PublicHome />} />
-      <Route path="/catalog" element={<CourseCatalog />} />
-      <Route path="/catalog/:courseId" element={<CourseDetail />} />
+      <Route path="/catalog" element={<PublicCatalogPage />} />
+      <Route path="/catalog/:courseId" element={<PublicCatalogDetailPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       {/* Clerk's path-based flow uses nested URLs for verification and recovery steps. */}
       <Route path="/auth/:mode/*" element={<AuthPage />} />
@@ -393,6 +414,7 @@ function AuthenticatedShell() {
   const [verification, setVerification] = useState<"checking" | "authenticated" | "failed">("checking");
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -410,8 +432,8 @@ function AuthenticatedShell() {
       try {
         const token = await getToken();
         if (!token) throw new Error("Clerk did not return a session token. Please sign in again.");
-        await authApi.getCurrentUser(token);
-        if (!cancelled) setVerification("authenticated");
+        const user = await authApi.getCurrentUser(token);
+        if (!cancelled) { setCurrentUser(user); setVerification("authenticated"); }
       } catch (caught) {
         if (cancelled) return;
         if (isApiError(caught)) {
@@ -436,7 +458,7 @@ function AuthenticatedShell() {
 
   if (!isLoaded || verification === "checking") return <main className="status-page"><section><p className="eyebrow">CODEAN workspace</p><h1>Verifying your session...</h1><p>Connecting your Clerk session to your CODEAN account.</p></section></main>;
   if (verification === "failed") return <main className="status-page"><section><p className="eyebrow">Authentication error</p><h1>We could not verify your session</h1><p role="alert">{error}</p><div className="status-actions">{isSignedIn && <button className="button button-primary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>}{isSignedIn && <button className="button button-secondary" onClick={() => { void signOut().then(() => window.location.assign("/auth/login")); }}>Sign out</button>}<Link className="button button-secondary" to="/auth/login">Return to sign in</Link></div></section></main>;
-  return <Shell />;
+  return currentUser ? <Shell currentUser={currentUser} /> : <main className="status-page"><section><h1>Preparing your workspace...</h1></section></main>;
 }
 
 function isApiError(error: unknown): error is {

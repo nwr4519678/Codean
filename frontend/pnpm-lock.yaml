@@ -75,6 +75,9 @@ importers:
       '@platform/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@platform/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@platform/ui':
         specifier: workspace:*
         version: link:../../packages/ui

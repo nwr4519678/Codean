@@ -113,6 +113,14 @@ public sealed record UpdateHomeworkCommand(
 
 public sealed record DeleteHomeworkCommand(long HomeworkId) : IRequest<Result<bool>>;
 
+public sealed record GetHomeworksPagedQuery(
+    int PageNumber = 1,
+    int PageSize = 20,
+    long? CourseId = null
+) : IRequest<Result<Platform.Application.Common.Pagination.PagedList<HomeworkResponse>>>;
+
+public sealed record GetHomeworkByIdQuery(long HomeworkId) : IRequest<Result<HomeworkResponse>>;
+
 
 // ── Homework Submission DTOs ──────────────────────────────────────────────
 
