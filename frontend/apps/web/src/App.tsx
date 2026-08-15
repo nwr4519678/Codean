@@ -35,7 +35,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { activity, assessments, courses, curriculum } from "./data";
-import { authApi, clearAuthTokens } from "@platform/api";
+import { authApi } from "@platform/api";
 import {
   AnnouncementsPage,
   AuthPage,
@@ -379,17 +379,60 @@ export default function App() {
 }
 
 function AuthenticatedShell() {
-  const { isLoaded, isSignedIn } = useClerkAuth();
-  const [checking, setChecking] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
+  const { isLoaded, isSignedIn, getToken } = useClerkAuth();
+  const [verification, setVerification] = useState<"checking" | "authenticated" | "failed">("checking");
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn) { setAuthenticated(false); setChecking(false); return; }
-    authApi.getCurrentUser().then(() => setAuthenticated(true)).catch(() => clearAuthTokens()).finally(() => setChecking(false));
-  }, [isLoaded, isSignedIn]);
-  if (checking) return <main className="status-page"><section><p className="eyebrow">CODEAN workspace</p><h1>Verifying your session…</h1></section></main>;
-  if (!authenticated) return <Navigate to="/auth/login" replace />;
+    if (!isSignedIn) {
+      setVerification("failed");
+      setError("Clerk could not create an authenticated session. Please sign in again.");
+      return;
+    }
+
+    let cancelled = false;
+    setVerification("checking");
+    setError("");
+
+    const verifySession = async () => {
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Clerk did not return a session token. Please sign in again.");
+        await authApi.getCurrentUser(token);
+        if (!cancelled) setVerification("authenticated");
+      } catch (caught) {
+        if (cancelled) return;
+        if (isApiError(caught)) {
+          const status = caught.response?.status;
+          const problem = caught.response?.data;
+          const backendMessage = problem?.detail ?? problem?.title;
+          if (status === 401) setError(backendMessage ?? "The backend rejected your Clerk session. Please sign in again.");
+          else if (status === 403) setError(backendMessage ?? "Your account does not have permission to access this workspace.");
+          else if (status && status >= 500) setError(backendMessage ?? "The backend could not create or load your account. Please try again.");
+          else if (!caught.response) setError("The authentication service could not be reached. Check your connection and try again.");
+          else setError(backendMessage ?? `Session verification failed (${status}).`);
+        } else {
+          setError(caught instanceof Error ? caught.message : "Session verification failed. Please try again.");
+        }
+        setVerification("failed");
+      }
+    };
+
+    void verifySession();
+    return () => { cancelled = true; };
+  }, [attempt, getToken, isLoaded, isSignedIn]);
+
+  if (!isLoaded || verification === "checking") return <main className="status-page"><section><p className="eyebrow">CODEAN workspace</p><h1>Verifying your session...</h1><p>Connecting your Clerk session to your CODEAN account.</p></section></main>;
+  if (verification === "failed") return <main className="status-page"><section><p className="eyebrow">Authentication error</p><h1>We could not verify your session</h1><p role="alert">{error}</p><div className="status-actions">{isSignedIn && <button className="button button-primary" onClick={() => setAttempt((value) => value + 1)}>Try again</button>}<Link className="button button-secondary" to="/auth/login">Return to sign in</Link></div></section></main>;
   return <Shell />;
+}
+
+function isApiError(error: unknown): error is {
+  response?: { status?: number; data?: { detail?: string; title?: string } };
+} {
+  return typeof error === "object" && error !== null && "isAxiosError" in error;
 }
 
 function AdminRedirect() {

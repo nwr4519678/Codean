@@ -5,7 +5,7 @@ import { authQueryKeys } from './keys';
 export const useCurrentUser = () => {
   return useQuery({
     queryKey: authQueryKeys.currentUser(),
-    queryFn: authApi.getCurrentUser,
+    queryFn: () => authApi.getCurrentUser(),
     retry: false,
     staleTime: 5 * 60 * 1000,
   });

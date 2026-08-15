@@ -4,6 +4,16 @@ import { RefreshTokenResponse } from '@platform/contracts';
 import { getSupabaseAccessToken, supabaseRefreshSession } from './auth/supabase';
 
 type AuthTokenProvider = () => string | null | Promise<string | null>;
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    platformSkipAuthRefresh?: boolean;
+  }
+
+  interface InternalAxiosRequestConfig {
+    platformSkipAuthRefresh?: boolean;
+  }
+}
+
 let authTokenProvider: AuthTokenProvider | null = null;
 
 export const setAuthTokenProvider = (provider: AuthTokenProvider | null) => {
@@ -155,6 +165,7 @@ apiClient.interceptors.response.use(
     if (
       !retryableRequest ||
       error.response?.status !== 401 ||
+      retryableRequest.platformSkipAuthRefresh ||
       retryableRequest._retry ||
       retryableRequest.url === API_URLS.AUTH.REFRESH_TOKEN
     ) {
