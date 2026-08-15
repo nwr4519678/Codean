@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { SignIn, SignUp } from "@clerk/clerk-react";
+import { SignIn, SignUp, useAuth, useUser } from "@clerk/clerk-react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -74,8 +74,12 @@ function Field({ label, children, hint }: { label: string; children: React.React
 }
 
 function PublicNav() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
   const [open, setOpen] = useState(false);
-  return <header className="public-nav"><Link to="/" className="brand public-brand"><span className="brand-mark"><Code2 size={20} /></span>CODEAN</Link><nav className={open ? "public-links open" : "public-links"}><Link to="/catalog">Courses</Link><Link to="/pricing">Pricing</Link><a href="#outcomes">Outcomes</a><a href="#community">Community</a></nav><div className="public-actions"><Link className="text-link" to="/auth/login">Sign in</Link><Link className="button button-primary" to="/auth/register">Start learning</Link><button className="icon-button public-menu" onClick={() => setOpen(!open)} aria-label="Toggle menu"><Menu size={20} /></button></div></header>;
+  const signedIn = isLoaded && isSignedIn;
+  const initials = [user?.firstName, user?.lastName].filter(Boolean).map((part) => part![0]).join("").slice(0, 2).toUpperCase() || "U";
+  return <header className="public-nav"><Link to="/" className="brand public-brand"><span className="brand-mark"><Code2 size={20} /></span>CODEAN</Link><nav className={open ? "public-links open" : "public-links"}><Link to="/catalog">Courses</Link><Link to="/pricing">Pricing</Link><a href="#outcomes">Outcomes</a><a href="#community">Community</a></nav><div className="public-actions">{signedIn ? <Link className="public-profile-link" to="/dashboard" aria-label="Open your dashboard" title="Open dashboard">{user?.imageUrl ? <img src={user.imageUrl} alt="" /> : <span>{initials}</span>}</Link> : <><Link className="text-link" to="/auth/login">Sign in</Link><Link className="button button-primary" to="/auth/register">Start learning</Link></>}<button className="icon-button public-menu" onClick={() => setOpen(!open)} aria-label="Toggle menu"><Menu size={20} /></button></div></header>;
 }
 
 export function PublicHome() {
