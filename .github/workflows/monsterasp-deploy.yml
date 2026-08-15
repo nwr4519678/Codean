@@ -51,3 +51,5 @@ jobs:
           server-password: ${{ secrets.MONSTERASP_SERVER_PASSWORD }}
           source-path: '\publish\'
           target-delete: true
+          # This file is managed directly on MonsterASP and contains secrets.
+          skip-files: appsettings.Production.json

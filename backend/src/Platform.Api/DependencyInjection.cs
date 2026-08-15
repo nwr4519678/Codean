@@ -25,6 +25,17 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        var defaultConnection = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(defaultConnection))
+        {
+            throw new InvalidOperationException(
+                "Required configuration 'ConnectionStrings:DefaultConnection' is missing.");
+        }
+
+        var hangfireConnection = configuration.GetConnectionString("Hangfire");
+        if (string.IsNullOrWhiteSpace(hangfireConnection))
+            hangfireConnection = defaultConnection;
+
         services.AddControllers();
         services.AddProblemDetails();
         services.AddEndpointsApiExplorer();
@@ -55,8 +66,9 @@ public static class DependencyInjection
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(o => configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development" ||
-                          (!string.IsNullOrWhiteSpace(o.Secret) || o.SigningKeys.Any(k => !string.IsNullOrWhiteSpace(k.Secret))),
-                "A production JWT signing secret or signing key is required.")
+                          o.SigningKeys.Any(k => k.IsActive && k.Secret.Length >= 32) ||
+                          o.Secret.Length >= 32,
+                "A production JWT signing secret of at least 32 characters is required.")
             .ValidateOnStart();
 
         // ── JWT Authentication ───────────────────────────────────────────────
@@ -175,8 +187,7 @@ public static class DependencyInjection
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(o =>
-                o.UseNpgsqlConnection(configuration.GetConnectionString("Hangfire")
-                    ?? configuration.GetConnectionString("DefaultConnection")!)));
+                o.UseNpgsqlConnection(hangfireConnection)));
 
         services.AddHangfireServer(opts =>
         {
