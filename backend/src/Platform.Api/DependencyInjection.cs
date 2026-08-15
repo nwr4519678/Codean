@@ -139,7 +139,13 @@ public static class DependencyInjection
                     {
                         if (useExternalAuth)
                         {
-                            var email = ctx.Principal?.FindFirst("email")?.Value?.Trim().ToLowerInvariant();
+                            // JwtBearer may map the standard `email` claim to ClaimTypes.Email.
+                            // Support both forms so Clerk session claims work with either
+                            // MapInboundClaims setting.
+                            var email = (ctx.Principal?.FindFirst("email")?.Value
+                                         ?? ctx.Principal?.FindFirst(ClaimTypes.Email)?.Value)
+                                ?.Trim()
+                                .ToLowerInvariant();
                             if (string.IsNullOrWhiteSpace(email))
                             {
                                 ctx.Fail("External identity token does not contain an email claim.");
