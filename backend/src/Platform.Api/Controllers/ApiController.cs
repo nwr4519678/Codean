@@ -69,8 +69,8 @@ public abstract class ApiController : ControllerBase
     protected bool TryGetUserId(out long userId)
     {
         userId = 0;
-        var raw = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
-               ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+               ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
         return raw is not null && long.TryParse(raw, out userId);
     }
 }

@@ -3,6 +3,14 @@ using System.Collections.Generic;
 
 namespace Platform.Infrastructure.Configuration;
 
+public sealed class SupabaseOptions
+{
+    public const string SectionName = "Supabase";
+    public string Url { get; set; } = "";
+    public string PublishableKey { get; set; } = "";
+    public string ServiceRoleKey { get; set; } = "";
+}
+
 public sealed class SigningKeyOptions
 {
     public string Kid { get; set; } = "default-key-id";

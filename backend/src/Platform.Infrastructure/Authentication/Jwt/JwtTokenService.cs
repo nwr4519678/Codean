@@ -34,7 +34,10 @@ public sealed class JwtTokenService : ITokenIssuer
         var jti = Guid.NewGuid().ToString();
 
         // Active Signing Key Selection
-        var activeKeyOpt = _opt.SigningKeys.FirstOrDefault(k => k.IsActive)
+        // Prefer an active key that is actually configured. Production hosts may
+        // still provide the legacy Jwt:Secret while the template SigningKeys
+        // entry remains present with an empty secret.
+        var activeKeyOpt = _opt.SigningKeys.FirstOrDefault(k => k.IsActive && !string.IsNullOrWhiteSpace(k.Secret))
                            ?? new SigningKeyOptions { Secret = _opt.Secret, Kid = "default-kid", IsActive = true };
 
         if (string.IsNullOrWhiteSpace(activeKeyOpt.Secret))

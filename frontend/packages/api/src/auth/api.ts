@@ -1,4 +1,5 @@
-import { apiClient, setAuthTokens, clearAuthTokens } from '../client';
+import { apiClient, clearAuthTokens } from '../client';
+import { supabaseLogout, supabasePasswordLogin, supabasePasswordSignup, supabaseRecoverPassword, getSupabaseAccessToken, supabaseUpdatePassword } from './supabase';
 import { API_URLS } from '@platform/config';
 import {
   LoginResponse,
@@ -10,9 +11,9 @@ import {
 
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
-    const res = await apiClient.post<LoginResponse>(API_URLS.AUTH.LOGIN, { email, password });
-    setAuthTokens(res.data.accessToken, res.data.refreshToken);
-    return res.data;
+    await supabasePasswordLogin(email, password);
+    const res = await apiClient.get<LoginResponse>(API_URLS.AUTH.ME);
+    return { ...res.data, accessToken: getSupabaseAccessToken() ?? "", refreshToken: "", accessTokenExpiresAt: "", refreshTokenExpiresAt: "" };
   },
 
   register: async (payload: {
@@ -22,13 +23,12 @@ export const authApi = {
     lastName: string;
     role?: string;
   }): Promise<RegisterResponse> => {
-    const res = await apiClient.post<RegisterResponse>(API_URLS.AUTH.REGISTER, {
-      fullName: `${payload.firstName} ${payload.lastName}`.trim(),
-      email: payload.email,
-      password: payload.password,
-      role: payload.role,
-    });
-    return res.data;
+    const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+    const session = await supabasePasswordSignup(payload.email, payload.password, fullName);
+    if (session.access_token) {
+      await apiClient.post("/api/auth/sync-profile", { fullName });
+    }
+    return { userId: 0, email: payload.email, fullName, emailVerificationRequired: !session.user.email_confirmed_at };
   },
 
   getCurrentUser: async (): Promise<CurrentUserResponse> => {
@@ -36,24 +36,23 @@ export const authApi = {
     return res.data;
   },
 
-  logout: async (refreshToken: string): Promise<void> => {
-    try {
-      await apiClient.post(API_URLS.AUTH.REVOKE_TOKEN, { refreshToken });
-    } finally {
-      clearAuthTokens();
-    }
+  logout: async (_refreshToken: string): Promise<void> => {
+    await supabaseLogout();
+    clearAuthTokens();
   },
 
   forgotPassword: async (email: string): Promise<void> => {
-    await apiClient.post(API_URLS.AUTH.FORGOT_PASSWORD, { email });
+    await supabaseRecoverPassword(email);
   },
 
   resetPassword: async (token: string, newPassword: string): Promise<void> => {
-    await apiClient.post(API_URLS.AUTH.RESET_PASSWORD, { token, newPassword });
+    const accessToken = token || getSupabaseAccessToken();
+    if (!accessToken) throw new Error("Your password reset session has expired. Please request a new link.");
+    await supabaseUpdatePassword(accessToken, newPassword);
   },
 
   verifyEmail: async (token: string): Promise<void> => {
-    await apiClient.post(API_URLS.AUTH.VERIFY_EMAIL, { token });
+    if (!getSupabaseAccessToken() && token) return;
   },
 
   setup2FA: async (): Promise<SetupTwoFactorResponse> => {
