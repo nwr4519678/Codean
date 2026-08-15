@@ -68,6 +68,31 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   return <div className="modal-backdrop" role="presentation" onMouseDown={onClose}><section className="modal" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button className="icon-button" onClick={onClose} aria-label="Close"><X size={19} /></button></header>{children}</section></div>;
 }
 
+function friendlyAuthError(message: string) {
+  const normalized = message.toLowerCase();
+  if (normalized.includes("rate limit") || normalized.includes("too many")) {
+    return { title: "Email limit reached", message: "Too many verification emails were requested. Please wait a little while and try again.", tone: "warning" };
+  }
+  if (normalized.includes("invalid") && normalized.includes("email")) {
+    return { title: "Check your email", message: "Enter a valid email address, without extra spaces.", tone: "error" };
+  }
+  if (normalized.includes("network") || normalized.includes("failed to fetch")) {
+    return { title: "Connection problem", message: "We could not reach the service. Check your connection and try again.", tone: "error" };
+  }
+  if (normalized.includes("already") && normalized.includes("registered")) {
+    return { title: "Account already exists", message: "This email is already registered. Try signing in instead.", tone: "info" };
+  }
+  return { title: "Something went wrong", message: message || "Please try again in a moment.", tone: "error" };
+}
+
+function AuthNotice({ message }: { message: string }) {
+  const notice = friendlyAuthError(message);
+  return <div className={`auth-notice ${notice.tone}`} role="alert">
+    <span className="auth-notice-icon" aria-hidden="true">{notice.tone === "error" ? "!" : "i"}</span>
+    <div><strong>{notice.title}</strong><p>{notice.message}</p></div>
+  </div>;
+}
+
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return <label className="form-field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>;
 }
@@ -149,7 +174,7 @@ export function AuthPage() {
   const titles: Record<string, [string, string]> = { login: ["Welcome back", "Continue your learning workspace."], register: ["Create your account", "Start with a focused learning plan."], "forgot-password": ["Reset your password", "We will send a secure reset link."], "reset-password": ["Choose a new password", "Use at least eight characters."], "verify-email": ["Verify your email", "Enter the code sent to your inbox."], "2fa": ["Two-factor verification", "Enter the six-digit authenticator code."] };
   const [title, copy] = titles[mode] ?? titles.login;
   if (submitted) return <StatusPage status={mode === "forgot-password" ? "email" : "verified"} />;
-  return <div className="auth-page"><aside><Link to="/" className="brand"><span className="brand-mark"><Code2 size={20} /></span>CODEAN</Link><div><p className="eyebrow">Focused learning</p><h2>Small steps. Real projects. Visible progress.</h2><p>Join a workspace built around doing the work, reviewing feedback, and improving deliberately.</p></div><span>Trusted by 18,000+ learners</span></aside><main><div className="auth-card"><Link className="back-link" to="/"><ArrowLeft size={15} /> Back to CODEAN</Link><p className="eyebrow">Account access</p><h1>{title}</h1><p>{copy}</p>{error && <p role="alert" className="form-error">{error}</p>}{mode === "login" && <div className="oauth-actions"><a className="button button-outline" href={supabaseOAuthUrl("google", `${window.location.origin}/auth/login`)}>Continue with Google</a><a className="button button-outline" href={supabaseOAuthUrl("azure", `${window.location.origin}/auth/login`)}>Continue with Microsoft</a></div>}<form onSubmit={submit}>{mode === "register" && <Field label="Full name"><input name="fullName" required placeholder="Nadia Hassan" /></Field>}{!["2fa", "verify-email"].includes(mode) && <Field label="Email address"><input name="email" required type="email" placeholder="name@example.com" /></Field>}{["login", "register"].includes(mode) && <Field label="Password"><input name="password" required type="password" placeholder="••••••••••••" /></Field>}{mode === "reset-password" && <><Field label="New password"><input name="password" required type="password" /></Field><Field label="Confirm password"><input required type="password" /></Field></>}{["2fa", "verify-email"].includes(mode) && <Field label="Verification code"><input name="code" className="code-input" required inputMode="numeric" maxLength={6} placeholder="000000" /></Field>}<button disabled={busy} className="button button-primary auth-submit">{busy ? "Working…" : mode === "login" ? "Sign in" : mode === "register" ? "Create student account" : "Continue"}<ArrowRight size={16} /></button></form>{mode === "login" && <><Link className="auth-secondary" to="/auth/forgot-password">Forgot password?</Link><p className="auth-switch">New to CODEAN? <Link to="/auth/register">Create a student account</Link></p></>}{mode === "register" && <><p className="registration-note"><ShieldCheck size={14} /> Teacher accounts are created by a platform administrator.</p><p className="auth-switch">Already have an account? <Link to="/auth/login">Sign in</Link></p></>}</div></main></div>;
+  return <div className="auth-page"><aside><Link to="/" className="brand"><span className="brand-mark"><Code2 size={20} /></span>CODEAN</Link><div><p className="eyebrow">Focused learning</p><h2>Small steps. Real projects. Visible progress.</h2><p>Join a workspace built around doing the work, reviewing feedback, and improving deliberately.</p></div><span>Trusted by 18,000+ learners</span></aside><main><div className="auth-card"><Link className="back-link" to="/"><ArrowLeft size={15} /> Back to CODEAN</Link><p className="eyebrow">Account access</p><h1>{title}</h1><p>{copy}</p>{error && <AuthNotice message={error} />}{mode === "login" && <div className="oauth-actions"><a className="button button-outline" href={supabaseOAuthUrl("google", `${window.location.origin}/auth/login`)}>Continue with Google</a><a className="button button-outline" href={supabaseOAuthUrl("azure", `${window.location.origin}/auth/login`)}>Continue with Microsoft</a></div>}<form onSubmit={submit}>{mode === "register" && <Field label="Full name"><input name="fullName" required placeholder="Nadia Hassan" /></Field>}{!["2fa", "verify-email"].includes(mode) && <Field label="Email address"><input name="email" required type="email" placeholder="name@example.com" /></Field>}{["login", "register"].includes(mode) && <Field label="Password"><input name="password" required type="password" placeholder="••••••••••••" /></Field>}{mode === "reset-password" && <><Field label="New password"><input name="password" required type="password" /></Field><Field label="Confirm password"><input required type="password" /></Field></>}{["2fa", "verify-email"].includes(mode) && <Field label="Verification code"><input name="code" className="code-input" required inputMode="numeric" maxLength={6} placeholder="000000" /></Field>}<button disabled={busy} className="button button-primary auth-submit">{busy ? "Working…" : mode === "login" ? "Sign in" : mode === "register" ? "Create student account" : "Continue"}<ArrowRight size={16} /></button></form>{mode === "login" && <><Link className="auth-secondary" to="/auth/forgot-password">Forgot password?</Link><p className="auth-switch">New to CODEAN? <Link to="/auth/register">Create a student account</Link></p></>}{mode === "register" && <><p className="registration-note"><ShieldCheck size={14} /> Teacher accounts are created by a platform administrator.</p><p className="auth-switch">Already have an account? <Link to="/auth/login">Sign in</Link></p></>}</div></main></div>;
 }
 
 export function CheckoutPage() {
