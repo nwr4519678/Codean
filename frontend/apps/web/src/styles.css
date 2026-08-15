@@ -734,3 +734,14 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
   .choice-list { grid-template-columns: 1fr; }
   .question-builder article header { grid-template-columns: 26px 1fr 55px 34px; }
 }
+
+.auth-notice { display: flex; align-items: flex-start; gap: 11px; margin: 18px 0; padding: 13px 14px; border: 1px solid #d9dff0; border-radius: 10px; background: #f7f8fc; color: #20283b; animation: auth-notice-in 260ms ease-out both; }
+.auth-notice strong { display: block; font-size: 13px; }
+.auth-notice p { margin: 4px 0 0; color: #66708a; font-size: 12px; line-height: 1.45; }
+.auth-notice-icon { display: grid; flex: 0 0 22px; width: 22px; height: 22px; place-items: center; border-radius: 50%; background: #5366c7; color: white; font-size: 13px; font-weight: 800; }
+.auth-notice.error { border-color: #f1caca; background: #fff5f5; }
+.auth-notice.error .auth-notice-icon { background: #cf5b5b; }
+.auth-notice.warning { border-color: #f0dbad; background: #fff9ec; }
+.auth-notice.warning .auth-notice-icon { background: #c18a2b; }
+.auth-notice.info { border-color: #cbd8f3; background: #f2f6ff; }
+@keyframes auth-notice-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
