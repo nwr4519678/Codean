@@ -50,6 +50,7 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 .sign-out-button:hover { color: #ffb0a5; background: rgba(192, 86, 66, .16); }
 .avatar, .top-avatar { display: grid; place-items: center; border: 0; border-radius: 50%; background: #d7e0ff; color: #304587; font-weight: 700; }
 .avatar { width: 34px; height: 34px; }
+.avatar img, .top-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .top-avatar { width: 36px; height: 36px; cursor: pointer; }
 .sidebar-close, .mobile-menu { display: none !important; }
 
@@ -61,7 +62,26 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 .topbar-actions { display: flex; align-items: center; gap: 12px; }
 .icon-button { position: relative; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
 .icon-button:hover { background: #eef0f4; }
-.notification-button span { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border: 2px solid white; border-radius: 50%; background: #d75c50; }
+.notification-menu { position: relative; }
+.notification-button { position: relative; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 10px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #4e5665; cursor: pointer; }
+.notification-button:hover, .notification-button[aria-expanded="true"] { border-color: var(--line); background: #f7f8fb; color: var(--primary); }
+.notification-button strong { font-size: 11px; font-weight: 700; }
+.notification-button em { min-width: 18px; padding: 2px 5px; border-radius: 10px; background: var(--primary); color: white; font-size: 9px; font-style: normal; font-weight: 800; text-align: center; }
+.notification-button .notification-dot { position: absolute; top: 6px; left: 24px; width: 7px; height: 7px; border: 2px solid white; border-radius: 50%; background: #d75c50; }
+.notification-popover { position: absolute; top: 48px; right: 0; z-index: 60; width: min(370px, calc(100vw - 32px)); overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: white; box-shadow: 0 18px 45px rgba(21, 28, 45, .16); animation: auth-notice-in 180ms ease-out both; }
+.notification-popover > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 17px 12px; border-bottom: 1px solid var(--line); }
+.notification-popover > header h2 { margin: 0; font-size: 16px; }
+.notification-popover > header .eyebrow { margin-bottom: 4px; }
+.notification-popover > header button { border: 0; background: transparent; color: var(--primary); font-size: 10px; font-weight: 700; cursor: pointer; }
+.notification-popover article { display: flex; gap: 10px; padding: 13px 17px; border-bottom: 1px solid #eef0f4; background: white; }
+.notification-popover article.unread { background: #f5f7ff; }
+.notification-popover article > span { width: 29px; height: 29px; display: grid; flex: 0 0 29px; place-items: center; border-radius: 50%; background: #e5e9fb; color: var(--primary); }
+.notification-popover article p { min-width: 0; margin: 0; }
+.notification-popover article strong, .notification-popover article small { display: block; }
+.notification-popover article strong { overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.notification-popover article small { margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.notification-empty { padding: 24px 17px; color: var(--muted); font-size: 11px; text-align: center; }
+.notification-popover > .button { display: flex; justify-content: center; margin: 12px 17px 15px; }
 .main-content { max-width: 1560px; margin: 0 auto; padding: 36px 38px 60px; }
 
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
@@ -250,6 +270,7 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
   .workspace { margin-left: 0; }
   .main-content { padding: 30px 26px 50px; }
   .topbar { padding: 0 24px; }
+  .notification-button strong { display: none; }
   .mobile-menu { flex: 0 0 auto; }
   .search-box { width: min(460px, 60vw); }
   .learning-layout { grid-template-columns: 1fr; }
@@ -646,6 +667,13 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 .notification-list button { border: 0; background: transparent; color: var(--primary); font-size: 9px; font-weight: 700; cursor: pointer; }
 .profile-hero { display: grid; grid-template-columns: 80px 1fr auto; align-items: center; gap: 20px; padding: 26px; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 7px; background: white; }
 .profile-avatar { width: 70px; height: 70px; display: grid; place-items: center; border-radius: 50%; background: #dfe5fb; color: var(--primary); font-family: "Manrope"; font-size: 19px; font-weight: 800; }
+.profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.profile-card-featured { display: grid; grid-template-columns: 70px minmax(0, 1fr); align-items: center; gap: 17px; }
+.profile-card-featured h2 { margin: 0 0 6px; font-size: 20px; }
+.profile-card-featured > div > p:not(.eyebrow) { margin: 0 0 8px; color: var(--muted); font-size: 11px; }
+.profile-card-note { grid-column: 1 / -1; margin: 5px 0 0; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; line-height: 1.6; }
+.form-section-heading { margin-bottom: 21px; padding-bottom: 15px; border-bottom: 1px solid var(--line); }
+.form-section-heading p { margin-bottom: 0; }
 .profile-hero h2 { margin-bottom: 5px; font-size: 19px; }
 .profile-hero div > p { color: var(--muted); font-size: 10px; }
 .profile-hero dl { display: flex; gap: 35px; }
@@ -712,6 +740,8 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 
 @media (max-width: 600px) {
   .public-nav { padding: 0 16px; }
+  .notification-button { padding: 0 6px; }
+  .notification-button em { display: none; }
   .public-actions > .button { display: none; }
   .public-hero-content, .public-section, .catalog-page, .detail-page, .pricing-page, .checkout-page > main { width: calc(100% - 32px); }
   .public-hero h1 { font-size: 38px; }
