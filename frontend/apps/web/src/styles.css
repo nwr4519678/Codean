@@ -46,6 +46,8 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 .streak-panel span, .profile-strip span { color: #858d9c; font-size: 11px; }
 .streak-icon { color: #f0a43a !important; }
 .profile-strip { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 8px 0; border-top: 1px solid #292e39; }
+.sign-out-button { width: 100%; margin-top: 8px; border: 0; background: transparent; cursor: pointer; text-align: left; }
+.sign-out-button:hover { color: #ffb0a5; background: rgba(192, 86, 66, .16); }
 .avatar, .top-avatar { display: grid; place-items: center; border: 0; border-radius: 50%; background: #d7e0ff; color: #304587; font-weight: 700; }
 .avatar { width: 34px; height: 34px; }
 .top-avatar { width: 36px; height: 36px; cursor: pointer; }
