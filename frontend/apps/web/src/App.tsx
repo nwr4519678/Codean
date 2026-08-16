@@ -73,6 +73,7 @@ import {
   StudentJudge,
   StudentJudgeChallenge,
   StudentLiveRoom,
+  StudentHelpCenter,
   StudentNotifications,
   StudentProfile,
   StudentSchedule,
@@ -170,7 +171,7 @@ function Shell({ currentUser }: { currentUser: CurrentUserResponse }) {
             <span className="streak-icon"><Flame size={18} /></span>
             <div><strong>Keep learning</strong><span>Your progress is saved automatically</span></div>
           </div>
-          <a className="nav-item" href="#help"><CircleHelp size={19} /><span>Help center</span></a>
+          <NavLink className="nav-item" to="/help" onClick={() => setMenuOpen(false)}><CircleHelp size={19} /><span>Help center</span></NavLink>
           <NavLink className="nav-item" to="/settings"><Settings size={19} /><span>Settings</span></NavLink>
           <Link className="profile-strip" to={role === "Student" ? "/profile" : "/teacher/dashboard"}>
             <span className="avatar">{user?.imageUrl ? <img src={user.imageUrl} alt="" /> : initials}</span>
@@ -225,6 +226,7 @@ function Shell({ currentUser }: { currentUser: CurrentUserResponse }) {
             <Route path="/notifications" element={<StudentNotifications />} />
             <Route path="/profile" element={<StudentProfile />} />
             <Route path="/settings" element={<StudentSettings />} />
+            <Route path="/help" element={<StudentHelpCenter />} />
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
             <Route path="/teacher/courses" element={<TeacherCourses />} />
             <Route path="/teacher/courses/new" element={<TeacherCourseEditor />} />
