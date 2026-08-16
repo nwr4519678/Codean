@@ -38,6 +38,27 @@ public sealed record CourseDetailResponse(
     IReadOnlyList<CourseModuleResponse> Modules
 );
 
+public sealed record CourseEnrollmentResponse(
+    long Id,
+    long CourseId,
+    string CourseTitle,
+    string CourseThumbnail,
+    string Category,
+    string TeacherName,
+    decimal Price,
+    string Status,
+    string AccessType,
+    DateTime EnrolledAt,
+    DateTime? CompletedAt,
+    CourseProgressResponse? Progress
+);
+
+public sealed record GetMyCourseEnrollmentsQuery()
+    : IRequest<Result<IReadOnlyList<CourseEnrollmentResponse>>>;
+
+public sealed record EnrollInCourseCommand(long CourseId)
+    : IRequest<Result<CourseEnrollmentResponse>>;
+
 public sealed record CreateCourseCommand(
     string Title,
     string Description,

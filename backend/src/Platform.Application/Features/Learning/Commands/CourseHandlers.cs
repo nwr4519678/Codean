@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Platform.Application.Common.Abstractions;
 using Platform.Application.Common.Caching;
 using Platform.Application.Common.Pagination;
@@ -12,6 +14,148 @@ using Platform.Domain.Entities;
 using Platform.Domain.Results;
 
 namespace Platform.Application.Features.Learning.Commands;
+
+public sealed class GetMyCourseEnrollmentsHandler
+    : IRequestHandler<GetMyCourseEnrollmentsQuery, Result<IReadOnlyList<CourseEnrollmentResponse>>>
+{
+    private readonly IRepository<CourseEnrollment> _enrollments;
+    private readonly IRepository<StudentProgress> _progresses;
+    private readonly ICurrentUser _currentUser;
+
+    public GetMyCourseEnrollmentsHandler(
+        IRepository<CourseEnrollment> enrollments,
+        IRepository<StudentProgress> progresses,
+        ICurrentUser currentUser)
+    {
+        _enrollments = enrollments;
+        _progresses = progresses;
+        _currentUser = currentUser;
+    }
+
+    public async Task<Result<IReadOnlyList<CourseEnrollmentResponse>>> Handle(
+        GetMyCourseEnrollmentsQuery request,
+        CancellationToken ct)
+    {
+        if (!_currentUser.UserId.HasValue)
+            return Result<IReadOnlyList<CourseEnrollmentResponse>>.Failure(
+                Error.Unauthorized("auth.unauthenticated", "You must be logged in."));
+
+        var enrollments = await _enrollments.Query()
+            .Where(e => e.StudentId == _currentUser.UserId.Value && e.Status == "Active")
+            .Include(e => e.Course)
+                .ThenInclude(c => c.Teacher)
+                    .ThenInclude(t => t.User)
+            .Include(e => e.Course)
+                .ThenInclude(c => c.CourseModules)
+                    .ThenInclude(m => m.Lessons)
+            .OrderByDescending(e => e.EnrolledAt)
+            .ToListAsync(ct);
+
+        var responses = new List<CourseEnrollmentResponse>(enrollments.Count);
+        foreach (var enrollment in enrollments)
+        {
+            var lessonIds = enrollment.Course.CourseModules
+                .SelectMany(m => m.Lessons)
+                .Select(l => l.Id)
+                .ToList();
+            var progressRecords = await _progresses.ListAsync(
+                p => p.StudentId == enrollment.StudentId && lessonIds.Contains(p.LessonId), ct);
+            var progress = BuildProgress(enrollment.CourseId, lessonIds.Count, progressRecords);
+            responses.Add(enrollment.ToResponse(progress));
+        }
+
+        return Result<IReadOnlyList<CourseEnrollmentResponse>>.Success(responses);
+    }
+
+    private static CourseProgressResponse BuildProgress(
+        long courseId,
+        int totalLessons,
+        IReadOnlyList<StudentProgress> progressRecords)
+    {
+        var completedLessons = progressRecords.Count(p => p.Completion >= 100);
+        var percentage = totalLessons > 0 ? (decimal)completedLessons / totalLessons * 100 : 0;
+        return new CourseProgressResponse(
+            courseId,
+            totalLessons,
+            completedLessons,
+            Math.Round(percentage, 2),
+            progressRecords.Select(p => p.ToResponse()).ToList());
+    }
+}
+
+public sealed class EnrollInCourseHandler
+    : IRequestHandler<EnrollInCourseCommand, Result<CourseEnrollmentResponse>>
+{
+    private readonly IRepository<Course> _courses;
+    private readonly IRepository<CourseEnrollment> _enrollments;
+    private readonly IUnitOfWork _uow;
+    private readonly ICurrentUser _currentUser;
+    private readonly IClock _clock;
+
+    public EnrollInCourseHandler(
+        IRepository<Course> courses,
+        IRepository<CourseEnrollment> enrollments,
+        IUnitOfWork uow,
+        ICurrentUser currentUser,
+        IClock clock)
+    {
+        _courses = courses;
+        _enrollments = enrollments;
+        _uow = uow;
+        _currentUser = currentUser;
+        _clock = clock;
+    }
+
+    public async Task<Result<CourseEnrollmentResponse>> Handle(EnrollInCourseCommand request, CancellationToken ct)
+    {
+        if (!_currentUser.UserId.HasValue)
+            return Result<CourseEnrollmentResponse>.Failure(
+                Error.Unauthorized("auth.unauthenticated", "You must be logged in."));
+
+        var course = await _courses.Query()
+            .Include(c => c.Teacher).ThenInclude(t => t.User)
+            .Include(c => c.CourseModules).ThenInclude(m => m.Lessons)
+            .FirstOrDefaultAsync(c => c.Id == request.CourseId && c.IsPublished, ct);
+        if (course is null)
+            return Result<CourseEnrollmentResponse>.Failure(
+                Error.NotFound("courses.not_found", "This course is not available for enrollment."));
+
+        if (course.Price > 0)
+            return Result<CourseEnrollmentResponse>.Failure(
+                Error.Validation("courses.payment_required", "This paid course must be completed through checkout before access is granted."));
+
+        var studentId = _currentUser.UserId.Value;
+        var existing = await _enrollments.FirstOrDefaultAsync(
+            e => e.CourseId == course.Id && e.StudentId == studentId, ct);
+        if (existing is not null)
+        {
+            existing.Course = course;
+            if (existing.Status == "Active")
+                return Result<CourseEnrollmentResponse>.Success(existing.ToResponse());
+
+            existing.Status = "Active";
+            existing.AccessType = "Free";
+            existing.EnrolledAt = _clock.UtcNow.UtcDateTime;
+            existing.CompletedAt = null;
+            _enrollments.Update(existing);
+            await _uow.SaveChangesAsync(ct);
+            return Result<CourseEnrollmentResponse>.Success(existing.ToResponse());
+        }
+
+        var enrollment = new CourseEnrollment
+        {
+            CourseId = course.Id,
+            StudentId = studentId,
+            Status = "Active",
+            AccessType = "Free",
+            EnrolledAt = _clock.UtcNow.UtcDateTime
+        };
+        await _enrollments.AddAsync(enrollment, ct);
+        await _uow.SaveChangesAsync(ct);
+        enrollment.Course = course;
+        return Result<CourseEnrollmentResponse>.Success(enrollment.ToResponse());
+    }
+}
 
 // ── CreateCourse ──────────────────────────────────────────────────────────
 

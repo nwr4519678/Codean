@@ -1,5 +1,6 @@
 import { apiClient } from '../client';
 import { API_URLS } from '@platform/config';
+import type { CourseCheckoutResponse, CourseEnrollmentResponse } from '@platform/contracts';
 
 export const learningApi = {
   getCourseProgress: async (courseId: number) => {
@@ -16,13 +17,18 @@ export const learningApi = {
     return res.data;
   },
 
-  getEnrolledCourses: async () => {
-    const res = await apiClient.get(API_URLS.COURSES.LIST);
+  getEnrolledCourses: async (): Promise<CourseEnrollmentResponse[]> => {
+    const res = await apiClient.get<CourseEnrollmentResponse[]>(API_URLS.COURSES.ENROLLED);
     return res.data;
   },
 
-  enrollCourse: async (courseId: number) => {
-    const res = await apiClient.post(`${API_URLS.COURSES.DETAIL(courseId)}/enroll`);
+  enrollCourse: async (courseId: number): Promise<CourseEnrollmentResponse> => {
+    const res = await apiClient.post<CourseEnrollmentResponse>(`${API_URLS.COURSES.DETAIL(courseId)}/enroll`);
+    return res.data;
+  },
+
+  initiateCourseCheckout: async (courseId: number): Promise<CourseCheckoutResponse> => {
+    const res = await apiClient.post<CourseCheckoutResponse>(API_URLS.COURSES.CHECKOUT(courseId));
     return res.data;
   },
 

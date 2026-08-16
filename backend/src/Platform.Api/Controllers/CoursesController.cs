@@ -1,11 +1,13 @@
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Authorization;
 using Platform.Application.Common.Pagination;
+using Platform.Application.Features.Commerce.Dtos;
 using Platform.Application.Features.Learning.Dtos;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -41,6 +43,39 @@ public sealed class CoursesController : ApiController
     public async Task<IActionResult> GetCourseById([FromRoute] long id, CancellationToken ct)
     {
         var result = await _sender.Send(new GetCourseByIdQuery(id), ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
+    /// <summary>Returns the courses the current student has active access to.</summary>
+    [HttpGet("enrolled")]
+    [SwaggerOperation(Summary = "Get My Enrolled Courses", Tags = ["Courses"])]
+    [ProducesResponseType(typeof(IReadOnlyList<CourseEnrollmentResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyEnrolledCourses(CancellationToken ct)
+    {
+        var result = await _sender.Send(new GetMyCourseEnrollmentsQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
+    /// <summary>Enrolls the current student in a published free course.</summary>
+    [HttpPost("{id:long}/enroll")]
+    [SwaggerOperation(Summary = "Enroll in Free Course", Tags = ["Courses"])]
+    [ProducesResponseType(typeof(CourseEnrollmentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<IActionResult> Enroll([FromRoute] long id, CancellationToken ct)
+    {
+        var result = await _sender.Send(new EnrollInCourseCommand(id), ct);
+        return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
+    }
+
+    /// <summary>Creates a verified Paymob checkout for a paid course.</summary>
+    [HttpPost("{id:long}/checkout")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("payment_checkout")]
+    [SwaggerOperation(Summary = "Start Paid Course Checkout", Tags = ["Courses"])]
+    [ProducesResponseType(typeof(CheckoutResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Checkout([FromRoute] long id, CancellationToken ct)
+    {
+        var result = await _sender.Send(new InitiateCourseCheckoutCommand(id), ct);
         return result.IsSuccess ? Ok(result.Value) : MapError(result.Error);
     }
 

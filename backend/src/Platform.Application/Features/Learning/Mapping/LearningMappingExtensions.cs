@@ -114,4 +114,23 @@ public static class LearningMappingExtensions
             progress.WatchTime
         );
     }
+
+    public static CourseEnrollmentResponse ToResponse(this CourseEnrollment enrollment, CourseProgressResponse? progress = null)
+    {
+        var course = enrollment.Course;
+        return new CourseEnrollmentResponse(
+            enrollment.Id,
+            enrollment.CourseId,
+            course?.Title ?? string.Empty,
+            course?.Thumbnail ?? string.Empty,
+            course?.Category ?? string.Empty,
+            course?.Teacher?.User?.FullName ?? string.Empty,
+            course?.Price ?? 0,
+            enrollment.Status,
+            enrollment.AccessType,
+            enrollment.EnrolledAt,
+            enrollment.CompletedAt,
+            progress
+        );
+    }
 }

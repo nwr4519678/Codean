@@ -23,6 +23,8 @@ public partial class StudentProfile
 
     public virtual ICollection<CodingSubmission> CodingSubmissions { get; set; } = new List<CodingSubmission>();
 
+    public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; } = new List<CourseEnrollment>();
+
     public virtual ICollection<ExamAttempt> ExamAttempts { get; set; } = new List<ExamAttempt>();
 
     public virtual ICollection<ExamResult> ExamResults { get; set; } = new List<ExamResult>();

@@ -29,6 +29,7 @@ public sealed class ProcessPaymobWebhookHandler
     private readonly IRepository<StudentSubscription> _subscriptions;
     private readonly IRepository<SubscriptionPlan> _plans;
     private readonly IRepository<Invoice> _invoices;
+    private readonly IRepository<CourseEnrollment>? _enrollments;
     private readonly IUnitOfWork _uow;
     private readonly IPaymobClient _paymob;
     private readonly IClock _clock;
@@ -40,12 +41,14 @@ public sealed class ProcessPaymobWebhookHandler
         IRepository<Invoice> invoices,
         IUnitOfWork uow,
         IPaymobClient paymob,
-        IClock clock)
+        IClock clock,
+        IRepository<CourseEnrollment>? enrollments = null)
     {
         _payments      = payments;
         _subscriptions = subscriptions;
         _plans        = plans;
         _invoices       = invoices;
+        _enrollments    = enrollments;
         _uow           = uow;
         _paymob        = paymob;
         _clock         = clock;
@@ -95,33 +98,51 @@ public sealed class ProcessPaymobWebhookHandler
             payment.PaidAt        = now;
             payment.PaymentMethod = request.PaymentMethod ?? "Paymob";
 
-            // The pending payment is created from a plan encoded in the merchant order.
-            // Resolve it from the order format and require the plan to exist before granting access.
-            var planId = TryExtractPlanId(payment.TransactionId);
-            var subscriptionPlan = planId.HasValue
-                ? await _plans.GetByIdAsync(planId.Value, ct)
-                : null;
-            if (payment.SubscriptionId is null && subscriptionPlan is null)
-                return Result<bool>.Failure(Error.Validation("paymob.plan_not_found", "The subscription plan for this payment no longer exists."));
-
-            if (payment.SubscriptionId is null)
+            var courseId = TryExtractCourseId(payment.TransactionId);
+            if (courseId.HasValue)
             {
-                var start = DateOnly.FromDateTime(now);
-                var end = start.AddMonths(subscriptionPlan!.DurationMonths);
-                var subscription = new StudentSubscription
+                if (_enrollments is null)
+                    return Result<bool>.Failure(Error.Validation("courses.enrollment_store_unavailable", "Course enrollment storage is unavailable."));
+                var enrollment = await _enrollments.FirstOrDefaultAsync(
+                    e => e.CourseId == courseId.Value && e.StudentId == payment.StudentId, ct);
+                if (enrollment is null)
+                    return Result<bool>.Failure(Error.NotFound("courses.enrollment_not_found", "The pending course enrollment was not found."));
+
+                enrollment.Status = "Active";
+                enrollment.AccessType = "Paid";
+                enrollment.Payment = payment;
+                enrollment.CompletedAt = null;
+                _enrollments.Update(enrollment);
+            }
+            else
+            {
+                // Subscription plan payments encode the plan in the merchant order.
+                var planId = TryExtractPlanId(payment.TransactionId);
+                var subscriptionPlan = planId.HasValue
+                    ? await _plans.GetByIdAsync(planId.Value, ct)
+                    : null;
+                if (payment.SubscriptionId is null && subscriptionPlan is null)
+                    return Result<bool>.Failure(Error.Validation("paymob.plan_not_found", "The subscription plan for this payment no longer exists."));
+
+                if (payment.SubscriptionId is null)
                 {
-                    StudentId = payment.StudentId,
-                    TeacherId = subscriptionPlan.TeacherId,
-                    PlanId = subscriptionPlan.Id,
-                    MonthNumber = subscriptionPlan.MonthNumber,
-                    StartDate = start,
-                    EndDate = end,
-                    AccessExpiresAt = end,
-                    Status = "Active",
-                    CreatedAt = now
-                };
-                await _subscriptions.AddAsync(subscription, ct);
-                payment.Subscription = subscription;
+                    var start = DateOnly.FromDateTime(now);
+                    var end = start.AddMonths(subscriptionPlan!.DurationMonths);
+                    var subscription = new StudentSubscription
+                    {
+                        StudentId = payment.StudentId,
+                        TeacherId = subscriptionPlan.TeacherId,
+                        PlanId = subscriptionPlan.Id,
+                        MonthNumber = subscriptionPlan.MonthNumber,
+                        StartDate = start,
+                        EndDate = end,
+                        AccessExpiresAt = end,
+                        Status = "Active",
+                        CreatedAt = now
+                    };
+                    await _subscriptions.AddAsync(subscription, ct);
+                    payment.Subscription = subscription;
+                }
             }
 
             // Generate Invoice once, even if a provider retries the callback.
@@ -158,5 +179,12 @@ public sealed class ProcessPaymobWebhookHandler
     {
         var parts = transactionId.Split('_', StringSplitOptions.RemoveEmptyEntries);
         return parts.Length >= 3 && long.TryParse(parts[2], out var planId) ? planId : null;
+    }
+
+    private static long? TryExtractCourseId(string transactionId)
+    {
+        var parts = transactionId.Split('_', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 3 && parts[0].Equals("course", StringComparison.OrdinalIgnoreCase)
+            && long.TryParse(parts[1], out var courseId) ? courseId : null;
     }
 }
