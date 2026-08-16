@@ -29,6 +29,8 @@ public partial class Payment
 
     public virtual Invoice Invoice { get; set; }
 
+    public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; } = new List<CourseEnrollment>();
+
     public virtual StudentProfile Student { get; set; }
 
     public virtual StudentSubscription Subscription { get; set; }

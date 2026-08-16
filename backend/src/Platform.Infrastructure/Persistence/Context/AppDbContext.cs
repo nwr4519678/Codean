@@ -39,6 +39,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Course> Courses { get; set; }
 
+    public virtual DbSet<CourseEnrollment> CourseEnrollments { get; set; }
+
     public virtual DbSet<CourseModule> CourseModules { get; set; }
 
     public virtual DbSet<Exam> Exams { get; set; }
@@ -720,6 +722,35 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Lesson).WithMany(p => p.LessonVideos)
                 .HasForeignKey(d => d.LessonId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
+        });
+
+        modelBuilder.Entity<CourseEnrollment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.CourseId, e.StudentId }, "UX_CourseEnrollments_Course_Student").IsUnique();
+            entity.HasIndex(e => e.StudentId, "IX_CourseEnrollments_StudentId");
+            entity.HasIndex(e => e.Status, "IX_CourseEnrollments_Status");
+
+            entity.Property(e => e.AccessType)
+                .IsRequired()
+                .HasMaxLength(20);
+            entity.Property(e => e.EnrolledAt).HasDefaultValueSql("NOW()");
+            entity.Property(e => e.Status)
+                .IsRequired()
+                .HasMaxLength(30);
+
+            entity.HasOne(d => d.Course).WithMany(p => p.CourseEnrollments)
+                .HasForeignKey(d => d.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Student).WithMany(p => p.CourseEnrollments)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Payment).WithMany(p => p.CourseEnrollments)
+                .HasForeignKey(d => d.PaymentId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<HomeworkSubmission>(entity =>

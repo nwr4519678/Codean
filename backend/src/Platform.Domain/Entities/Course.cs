@@ -31,6 +31,8 @@ public partial class Course
 
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
+    public virtual ICollection<CourseEnrollment> CourseEnrollments { get; set; } = new List<CourseEnrollment>();
+
     public virtual ICollection<CourseModule> CourseModules { get; set; } = new List<CourseModule>();
 
     public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();

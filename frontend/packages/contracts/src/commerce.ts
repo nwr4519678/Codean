@@ -28,6 +28,14 @@ export interface CheckoutInitResponse {
   iframeUrl?: string;
 }
 
+export interface CourseCheckoutResponse {
+  transactionId: string;
+  checkoutUrl: string;
+  clientSecret: string;
+  amount: number;
+  currency: string;
+}
+
 export interface PaymentResponse {
   id: number;
   orderId: string;

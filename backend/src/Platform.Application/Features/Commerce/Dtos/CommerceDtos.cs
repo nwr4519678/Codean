@@ -60,6 +60,10 @@ public sealed record InitiateCheckoutCommand(
     long PlanId
 ) : IRequest<Result<CheckoutResponse>>;
 
+public sealed record InitiateCourseCheckoutCommand(
+    long CourseId
+) : IRequest<Result<CheckoutResponse>>;
+
 public sealed record CheckoutResponse(
     string TransactionId,
     string CheckoutUrl,

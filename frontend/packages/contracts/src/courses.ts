@@ -59,6 +59,21 @@ export interface CourseDetailResponse {
   modules: CourseModuleResponse[];
 }
 
+export interface CourseEnrollmentResponse {
+  id: number;
+  courseId: number;
+  courseTitle: string;
+  courseThumbnail?: string;
+  category: string;
+  teacherName: string;
+  price: number;
+  status: "Active" | "PendingPayment" | "Cancelled" | "Completed" | string;
+  accessType: "Free" | "Paid" | string;
+  enrolledAt: string;
+  completedAt?: string;
+  progress?: CourseProgressResponse;
+}
+
 export interface StudentProgressResponse {
   id: number;
   studentId: number;

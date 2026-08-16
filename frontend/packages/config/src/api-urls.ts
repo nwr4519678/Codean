@@ -31,7 +31,9 @@ export const API_URLS = {
   },
   COURSES: {
     LIST: '/api/courses',
+    ENROLLED: '/api/courses/enrolled',
     DETAIL: (id: number | string) => `/api/courses/${id}`,
+    CHECKOUT: (id: number | string) => `/api/courses/${id}/checkout`,
     CREATE: '/api/courses',
     UPDATE: (id: number | string) => `/api/courses/${id}`,
     PUBLISH: (id: number | string) => `/api/courses/${id}/publish`,
