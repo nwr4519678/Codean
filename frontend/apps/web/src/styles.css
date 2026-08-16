@@ -958,3 +958,53 @@ h1, h2, h3, strong, .brand { font-family: "Manrope", sans-serif; }
 @keyframes auth-notice-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
 .enroll-error { margin: 1rem 0; padding: .8rem .9rem; border: 1px solid #f2b8b5; border-radius: .7rem; background: #fff5f4; color: #a33a36; font-size: .9rem; line-height: 1.45; }
+
+.help-center-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; }
+.help-welcome, .help-faq-card, .help-contact-card { border: 1px solid var(--line); border-radius: 14px; background: white; box-shadow: 0 8px 24px rgba(29, 37, 58, .04); }
+.help-welcome { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr minmax(240px, 360px); align-items: center; gap: 18px; padding: 24px; background: linear-gradient(135deg, #f2f5ff, #fff); }
+.help-welcome-icon { display: grid; width: 52px; height: 52px; place-items: center; border-radius: 14px; background: #e0e7ff; color: var(--primary); }
+.help-welcome h2, .help-contact-card h2 { margin: 0 0 7px; font-size: 20px; }
+.help-welcome p:not(.eyebrow), .help-contact-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.help-search { display: flex; align-items: center; gap: 9px; min-height: 45px; padding: 0 13px; border: 1px solid #d8deea; border-radius: 8px; background: white; color: #7b8392; }
+.help-search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; }
+.help-faq-card { padding: 24px; }
+.help-article-count { color: var(--muted); font-size: 11px; }
+.help-faq-list { margin-top: 16px; border-top: 1px solid #edf0f5; }
+.help-faq-item { border-bottom: 1px solid #edf0f5; }
+.help-faq-item button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 58px; padding: 0; border: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
+.help-faq-item button svg { flex: 0 0 auto; color: #8790a2; transition: transform .18s ease; }
+.help-faq-item.open button { color: var(--primary); }
+.help-faq-item.open button svg { transform: rotate(90deg); color: var(--primary); }
+.help-faq-item p { margin: -3px 28px 18px 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.help-contact-card { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; padding: 24px; }
+.help-contact-card > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: #e5f6f0; color: var(--green); }
+.help-contact-card .button { margin-top: 5px; }
+
+@media (max-width: 680px) {
+  .main-content { padding: 24px 16px 48px; }
+  .main-content .eyebrow { font-size: 11px; }
+  .main-content .page-heading h1 { font-size: 28px; }
+  .main-content .page-heading > div > p:last-child { font-size: 15px; line-height: 1.55; }
+  .main-content .section-heading h2 { font-size: 20px; }
+  .main-content .muted-copy, .main-content .empty-state p { font-size: 14px; line-height: 1.6; }
+  .main-content .button { min-height: 44px; font-size: 14px; }
+  .settings-form-header { padding: 22px 20px; }
+  .settings-form-header h2 { font-size: 21px; }
+  .settings-form-header p:not(.eyebrow) { font-size: 13px; line-height: 1.6; }
+  .settings-field { gap: 8px; font-size: 12px; }
+  .settings-field input { min-height: 48px; font-size: 16px; }
+  .settings-field em, .settings-help, .settings-field-error { font-size: 11px; }
+  .settings-readonly { min-height: 48px; }
+  .settings-readonly input { min-height: 46px; font-size: 15px; }
+  .settings-verified, .settings-pending { font-size: 10px; }
+  .settings-sidebar nav a { min-height: 44px; font-size: 12px; }
+  .settings-sidebar-note { font-size: 11px; line-height: 1.6; }
+  .help-center-layout { grid-template-columns: 1fr; }
+  .help-welcome { grid-column: auto; grid-template-columns: auto 1fr; padding: 20px; }
+  .help-welcome .help-search { grid-column: 1 / -1; }
+  .help-welcome h2 { font-size: 21px; }
+  .help-welcome p:not(.eyebrow), .help-contact-card p { font-size: 13px; }
+  .help-faq-card { padding: 20px; }
+  .help-faq-item button { min-height: 62px; font-size: 14px; }
+  .help-faq-item p { font-size: 13px; }
+}
